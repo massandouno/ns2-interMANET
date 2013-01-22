@@ -1,0 +1,48 @@
+
+
+\section{Insufficiency of Extant Routing Frameworks}
+\label{sec::related}
+
+
+In this section, we discuss why extant routing frameworks are insufficient to support inter-domain routing in MANETs. Particularly, we explain why a BGP-like protocol is inapplicable in the ad hoc environment, and what in extant ad hoc routing frameworks are missing to support interoperation among multiple MANET domains.
+
+%review two approaches and present why current routing frameworks are not sufficient to support inter-domain %routing in MANETs. 
+%The first approach is a BGP-like protocol to work in the wireless environment,
+%and the second one is some existing routing frameworks that involves multiple routing protocols or network %components.
+
+\subsection{Inadequacy of BGP for MANETs}
+Consider Figure~\ref{fig:challenges1}, which consists of three MANET domains. 
+One might apply a BGP-like protocol to this scenario as in Figure~\ref{fig:challenges2}. However, there are several issues that render such a protocol inapplicable. First, the path vector protocol in BGP implicitly assumes the availability of the following functions:
+
+%\vspace{4pt}
+\noindent
+(1) {\bf Internal Gateway Detection:} The internal gateways within the same domain can detect the presence of each other so that they can communicate about the information of external routes. 
+
+%\vspace{4pt}
+\noindent
+(2) {\bf Internal Network Knowledge:} The gateways know the reachable destinations and the internal routes to the destinations within the domain.
+
+%\vspace{4pt}
+
+These functions are normally supported by the proactive intra-domain routing protocols through continual maintenance of network state information. However, we cannot always assume the availability of this information in MANETs that use a reactive routing protocol in their domains. Also a direct application of a path vector protocol over MANETs to support these functions may be undesirable to MANETs with dynamic node mobility and scarce wireless communication bandwidth.
+
+Second, in BGP every destination is identified by an IP address, which follows a certain network hierarchy. To announce the destinations in a domain, gateways will aggregate the IP addresses in the domain by suitable IP prefixes (e.g., 92.168.0.0/16).  However, in MANETs, mobility %and ad hoc deployment 
+can create arbitrary network partition, unlike the perfect split of IP addresses as in Figure~\ref{fig:challenges2}.  Hence, IP prefixes do not suitably aggregate the IP addresses in partitioned MANETs and thus we cannot use the prefix-based routing of BGP.
+
+Third, BGP relies on a path vector protocol that filters the paths consisting of repeated AS numbers to prevent looping. For example, in Figure~\ref{fig:challenges2}, after topology change, the inter-domain level path from a source in AS 45 (92.168.1.0/24) to AS 2334 (112.18.0.0/16) is AS 45$\to$AS 310$\to$AS 45$\to$AS 2334. This path will be filtered by the BGP path vector protocol, and hence it will prevent the nodes in AS 45 (92.168.1.0/24) from reaching AS 2334 (112.18.0.0/16). 
+
+In general, the design considerations for inter-domain routing in MANETs are fundamentally different from that of BGP. The main challenge of BGP is to cope with the extreme scale of the Internet; however, the scale of the network is not the main concern in MANETs since they will be relatively small due to physical/wireless, technical, and geographical constraints. Rather the main challenge here is to handle the constant changes in the network connectivity at both individual node level and at network domain level due to node mobility. 
+
+\subsection{Insufficiency of current ad hoc protocols}
+
+In the literature, there are several proposals to enable interoperations among multiple wireless domains \cite{crowcroft03plutarch}\cite{SEBQ04turfnet}. Most of them only focus on high level architectures and provide a sketch of required components (e.g., translation of different naming spaces, and different protocols). 
+%Plutarch is an architecture that translates address spaces and transport protocols among domains to support interoperation of heterogeneous networks \cite{crowcroft03plutarch}. TurfNet is another proposal for inter-domain networking without requiring global network addressing or a common network protocol \cite{SEBQ04turfnet}. 
+While these related works have considered various issues regarding interoperation of multiple networks, none of them provided a specific solution for inter-domain routing between MANETs. 
+
+In the wireless context, there have been proposals to take advantage of heterogeneous routing protocols to adapt to network dynamics and traffic characteristics. For example, hybrid routing protocols (e.g. SHARP \cite{haas03sharp}) uses both proactive and reactive routing protocols to adapt the routing behavior according to traffic patterns. The basic idea is to create proactive routing zones around nodes where there are lots of data traffic, and use reactive routing in other areas. 
+%Although hybrid routing is similar to inter-domain routing in that it combines different routing protocols, 
+Since the main goal of hybrid routing is to improve the routing performance in a {\em single} domain via adaptation, it cannot support the interaction of multiple domains with different routing protocols.
+
+Another related approach is cluster-based networking in MANETs \cite{chen04clustering}. The idea of cluster-based networking is to form self-organizing clusters and a routing backbone among cluster heads. In this way, cluster-based networks can use hierarchical routing and achieve a scalable routing solution in a single domain.  Although cluster-based routing has a structural similarity to inter-domain routing, they are essentially addressing two fundamentally different problems. The goal of inter-domain routing is to support multiple domains with {\em autonomous} control; on the other hand, a cluster-based routing is applicable in a single domain with a full control over its clusters (e.g., on cluster formation and cluster head election). 
+%The framwork that enables inter-domain routing MANETs should be able to support opaque interaction between domains based on administrative policies.
+

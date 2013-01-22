@@ -1,0 +1,21 @@
+This paper proposes a solution for inter-doman routing in ad hoc MANET's. The authors identify requirements for inter-domain routing and show that BGP and current ad hoc network protocols do not meet these needs (for example, domain partitioning due to mobility). A specific scheme called IDRM is described and routing algorithms used are given in detail using pseudo code. Although a complete validation of the protocol is not given, the paper concludes with an analysis of the routing overhead, which is shown to be reasonable.
+
+The paper is well written. It outlines as routing protocol for an ad-hos network consisting of multiple domains. The case is insufficiently made that such a network would arise in Vehicular Ad-Hoc networks - but if you accepts that there is a need, then this design would appear to fill it. The analysis is reaonably thorough
+
+The authors present a scheme for inter-domain routing in MANETs including a high-level description of the inter-domain routing protocol. The paper is very well written, and as far as I know, this is novel work.
+
+Some detailed comments:
+
+In sec 2.1, I assume that you mean 92.168.{1,2}.0/24, and not /8 (four occurences).
+
+Sec 3.1.3: "destination c_1": is this a gateway, MANET ID, node ID, or membership digest? Perhaps I am just confused by comparing with BGP where this is an IP prefix. Since you don't make any syntactic distinction from the path components (a_1 and b_1), my guess is that c_1 is also a gateway. But then, where do the membership digests come into the equation?
+
+Algo 1: I was confused for a long time by the un-intuitive syntax in the first if-clause (withdraw[MD, path] <- [MD, path]). Moving the comment ("// store old route announcement...") up two lines would help!
+
+Sec 3.2 second paragraph, "see Section 3.1.2 for how to obtain M(i)": I don't find any more than that this is "a plain membership digest" in Sec 3.1.2.
+
+Algo 2: perhaps a nit, but shouldn't there be a check in the second if-clause that you previously announced the route that now is withdrawn? (that it existed in the path vector)
+
+Algo 3: isn't the last if-clause (generating new route announcement) already taken care of by Algo 2???
+
+Sec 4 on the overhead analysis: isn't the size of the membership digest a factor important for this analysis?

@@ -1,0 +1,12 @@
+\subsection{Scenario 3: Random Topology}
+\label{sec:case3}
+In the previous examples, we illustrate the effectiveness of IDRM
+with two simple scenarios. 
+In this sections, we consider a more complex scenario with 
+random topology. 
+We randomly deployed 60 nodes in a 1000x1000 $m^{2}$ area,
+and the random waypoint mobility mode is used.
+Two average speed settings, 1.34m/s and 13.4m/s, 
+are used to simulate walking and driving speed.
+Also, we study the performance of IDRM with different percentage of
+gateways and different number of domains.

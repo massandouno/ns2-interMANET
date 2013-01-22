@@ -1,0 +1,10 @@
+./pro_noIDRM_1000.sh 1
+./pro_noIDRM_1000.sh 2
+./pro_noIDRM_1000.sh 3
+./pro_noIDRM_1000.sh 4
+./pro_noIDRM_1000.sh 5
+./pro_noIDRM_1000.sh 6
+./pro_noIDRM_1000.sh 7
+./pro_noIDRM_1000.sh 8
+./pro_noIDRM_1000.sh 9
+./pro_noIDRM_1000.sh 10

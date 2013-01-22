@@ -1,0 +1,130 @@
+ex/srm-star.tcl:$loss_module drop-target [$ns set nullAgent_]
+ex/srm-adapt-rep.tcl:$loss_module drop-target [$ns set nullAgent_]
+ex/srm-chain-session.tcl:$loss_module drop-target [$ns set nullAgent_]
+ex/hdlc/no-arq.tcl:	#$errmodel drop-target [new Agent/Null]
+ex/hdlc/no-arq.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/hdlc/case2a.tcl:	#$errmodel drop-target [new Agent/Null]
+ex/hdlc/case2a.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/hdlc/arq.tcl:	#$errmodel drop-target [new Agent/Null]
+ex/hdlc/arq.tcl:	$em drop-target [new Agent/Null] 
+ex/hdlc/case2b.tcl:	#$errmodel drop-target [new Agent/Null]
+ex/hdlc/case2b.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/hdlc/case0.tcl:	#$errmodel drop-target [new Agent/Null]
+ex/hdlc/case0.tcl:	#$errmodel drop-target [new Agent/Null] 
+ex/hdlc/case0.tcl:	#$errmodel drop-target [new Agent/Null] 
+ex/hdlc/case2c.tcl:	#$errmodel drop-target [new Agent/Null]
+ex/hdlc/case2c.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/hdlc/case1.tcl:	#$errmodel drop-target [new Agent/Null]
+ex/hdlc/case1.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/fq.tcl:		$q drop-target $nullAgent_
+ex/fq.tcl:	$queue_ drop-target $nullAgent
+ex/fq.tcl:	$q drop-target $drpT_
+ex/fq.tcl:	$queue_ drop-target $drophead_
+ex/fq.tcl:#	$drpT_ target [$queue_ drop-target]
+ex/fq.tcl:#	$queue_ drop-target $drpT_
+ex/snoop/MySnoop.tcl:    $loss_module drop-target [new Agent/Null] 
+ex/srm-adapt-req.tcl:$loss_module drop-target [$ns set nullAgent_]
+ex/srm-adapt-req-session.tcl:    $loss_module drop-target [$ns set nullAgent_]
+ex/srm-adapt-rep-session.tcl:$loss_module drop-target [$ns set nullAgent_]
+ex/wpan/wpan_demo5.tcl:        #$err drop-target [new Agent/Null]
+ex/srm-chain.tcl:$loss_module drop-target [$ns set nullAgent_]
+ex/xcp/2statemarkovB.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/xcp/2statemarkovB.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/xcp/hdlc-tcp.tcl:	#$errmodel drop-target [new Agent/Null]
+ex/xcp/hdlc-tcp.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/xcp/hdlc-tcp.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/xcp/2statemarkovA.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/xcp/2statemarkovA.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/xcp/simple-hdlc.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/xcp/simple-hdlc.tcl:	$errmodel drop-target [new Agent/Null] 
+ex/fq-cbr.tcl:		$q drop-target $nullAgent_
+ex/fq-cbr.tcl:	$queue_ drop-target $nullAgent
+ex/fq-cbr.tcl:	$q drop-target $drpT_
+ex/fq-cbr.tcl:	$queue_ drop-target $drophead_
+ex/fq-cbr.tcl:#	$drpT_ target [$queue_ drop-target]
+ex/fq-cbr.tcl:#	$queue_ drop-target $drpT_
+ex/pgm/binary.tcl:       $loss_module($i) drop-target [$ns set nullAgent_]
+ex/pgm/sim3.tcl:$loss_module1 drop-target [$ns set nullAgent_]
+ex/pgm/sim3.tcl:$loss_module2 drop-target [$ns set nullAgent_]
+ex/pgm/sim3.tcl:$loss_module3 drop-target [$ns set nullAgent_]
+ex/pgm/sim3.tcl:$loss_module4 drop-target [$ns set nullAgent_]
+ex/pgm/sim3.tcl:$loss_module5 drop-target [$ns set nullAgent_]
+ex/pgm/sim4.tcl:$loss_module1 drop-target [$ns set nullAgent_]
+ex/pgm/sim4.tcl:$loss_module2 drop-target [$ns set nullAgent_]
+ex/pgm/sim1.tcl:$loss_module drop-target [$ns set nullAgent_]
+ex/pgm/sim2.tcl:$loss_module1 drop-target [$ns set nullAgent_]
+ex/pgm/sim2.tcl:$loss_module2 drop-target [$ns set nullAgent_]
+ex/srm-star-session.tcl:    $loss_module drop-target [$ns set nullAgent_]
+lan/vlan.tcl:	$ifq_ drop-target $drophead_ 
+lan/vlan.tcl:	$mac_ drop-target $drophead_ 
+lan/vlan.tcl:	$ll_ drop-target $drophead_
+lan/vlan.tcl:	    $mac_ drop-target $macdrophead_
+lan/abslan.tcl:		$q_ drop-target [$nif set drophead_]
+lan/abslan.tcl:        $mac_ drop-target $drophead_
+lan/abslan.tcl:        $ll_ drop-target $drophead_
+lib/ns-queue.tcl:		$qdisc drop-target $drop
+lib/ns-queue.tcl:	$q drop-target $drpT_
+lib/ns-queue.tcl:    $self early-drop-target $edsnoop 
+lib/ns-queue.tcl:    # $edsnoop drop-target [$dsnoop drop-target]
+lib/ns-queue.tcl:    $self drop-target $dsnoop
+lib/ns-lib.tcl:	[$link_([$n1 id]:[$n2 id]) queue] drop-target $trace
+lib/ns-lib.tcl:	    [$lnk queue] early-drop-target $edsnoop
+lib/ns-lib.tcl:	[$lnk queue] drop-target $dsnoop
+lib/ns-mobilenode.tcl:		$imep drop-target $drpT
+lib/ns-mobilenode.tcl:		$arptable_ drop-target $drpT
+lib/ns-mobilenode.tcl:	$ifq drop-target $drpT
+lib/ns-mobilenode.tcl:		$mac drop-target $drpT
+lib/ns-mobilenode.tcl:		$mac drop-target [$ns set nullAgent_]
+lib/ns-mobilenode.tcl:	$ragent drop-target $drpT
+lib/ns-sat.tcl:        $ifq drop-target $drophead
+lib/ns-sat.tcl:	$em drop-target [new Agent/Null]; # otherwise, packet is only marked
+lib/ns-sat.tcl:	$ifq_($index_) drop-target $drpT_($index_)
+lib/ns-sat.tcl:		$errT_($index_) target [$em_($index_) drop-target]
+lib/ns-sat.tcl:		$em_($index_) drop-target $errT_($index_)
+lib/ns-link.tcl:	$queue_ drop-target $drophead_
+lib/ns-link.tcl:	$queue_ drop-target $drophead_
+lib/ns-link.tcl:#	$drpT_ target [$queue_ drop-target]
+lib/ns-link.tcl:#	$queue_ drop-target $drpT_
+lib/ns-link.tcl:		$ttl_ drop-target [lindex $args 0]
+lib/ns-link.tcl:		$ttl_ drop-target $drophead_
+lib/ns-link.tcl:		$link_ drop-target [lindex $args 0]
+lib/ns-link.tcl:		$link_ drop-target $drophead_
+lib/ns-link.tcl:		$dynamics_ drop-target [lindex $args 0]
+lib/ns-link.tcl:		$dynamics_ drop-target $drophead_
+lib/ns-link.tcl:#		$queue_ drop-target $drpT_
+lib/ns-link.tcl:#		$queue_ drop-target $snoopDrop_
+lib/ns-link.tcl:# point the em's drop-target to the drophead
+lib/ns-link.tcl:	$em drop-target $drophead_
+lib/ns-link.tcl:	$em drop-target $drophead_
+lib/ns-errmodel.tcl:	$self cmd drop-target [new Connector]
+lib/ns-errmodel.tcl:	$errmodel drop-target [$self cmd drop-target]
+lib/ns-errmodel.tcl:	[$self cmd target] drop-target $obj
+lib/ns-errmodel.tcl:ErrorModule instproc drop-target args {
+lib/ns-errmodel.tcl:		return [[$self cmd drop-target] target]
+lib/ns-errmodel.tcl:	[$self cmd drop-target] drop-target $obj
+lib/ns-errmodel.tcl:	[$self cmd drop-target] target $obj
+mobility/tora.tcl:	$ragent drop-target $drpT
+mobility/landmark.tcl:    $ragent drop-target $drpT
+mobility/dsr.tcl:    $dsr_agent_ drop-target $drpT
+mobility/dsdv.tcl:    $ragent drop-target $drpT
+mobility/com.tcl:#    $ragent drop-target $drpT
+mobility/flood.tcl:    $ragent drop-target $drpT
+scenario-generation/scen-lib/rmcc.tcl:	$loss_module drop-target [$ns set nullAgent_]
+scenario-generation/scen-lib/rmcc.tcl:	$loss_module drop-target [$ns set nullAgent_]
+test/test-suite-srm.tcl:    $loss_module drop-target [$ns_ set nullAgent_]
+test/test-suite-srm.tcl:    $loss_module drop-target [$ns_ set nullAgent_]
+test/test-suite-srm.tcl:    $loss_module drop-target [$ns_ set nullAgent_]
+test/test-suite-srm.tcl:    $loss_module drop-target [$ns_ set nullAgent_]
+test/test-suite-srm.tcl:    $loss_module drop-target [$ns_ set nullAgent_]
+test/test-suite-rfc793edu.tcl:    $loss_module drop-target [new Agent/Null]
+test/test-suite-tagged-trace.tcl:  $err drop-target [new Agent/Null] 
+test/test-suite-mixmode.tcl:	$loss_module1 drop-target [$ns_ set nullAgent_]
+test/test-suite-mixmode.tcl:	$loss_module2 drop-target [$ns_ set nullAgent_]
+test/test-suite-mixmode.tcl:	$loss_module3 drop-target [$ns_ set nullAgent_]
+test/test-suite-snoop.tcl:  $err drop-target [new Agent/Null] 
+test/test-suite-session.tcl:	$loss_module1 drop-target [$ns_ set nullAgent_]
+test/test-suite-session.tcl:	$loss_module2 drop-target [$ns_ set nullAgent_]
+test/test-suite-session.tcl:	$loss_module3 drop-target [$ns_ set nullAgent_]
+test/test-suite-session.tcl:	$loss_module1 drop-target [$ns_ set nullAgent_]
+test/test-suite-session.tcl:	$loss_module2 drop-target [$ns_ set nullAgent_]
+test/test-suite-session.tcl:	$loss_module3 drop-target [$ns_ set nullAgent_]

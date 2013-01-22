@@ -1,0 +1,65 @@
+#ifndef MISC_H_
+#define MISC_H_
+
+#define MAX_STRING_LENGTH 20
+#define TRACE_FORMAT "\n$ns_ at %lf \"$node_(%d) setdest %lf %lf %lf\""
+
+
+//return a random double number at interval [0,1]
+double new_random1()
+{	return (double) (rand()*1.0/RAND_MAX);	}
+
+//return a random double number at the interval [-1,1]
+double new_random2()
+{	return (double) ((rand()*1.0/RAND_MAX-0.5)*2);	}
+
+
+
+//return the min number
+double max(double a, double b)
+{
+	if(a>=b)
+		return a;
+	else 
+		return b;
+}
+
+//return the max number
+double min(double a, double b)
+{
+	if(a<=b)
+		return a;
+	else 
+		return b;
+}
+
+//calculate the correlation value at time t
+double correlation(double speed1, double angle1, double speed2, double angle2)
+{
+	double x_speed1 = speed1*cos(angle1);
+	double y_speed1 = speed1*sin(angle1);
+
+	double x_speed2 = speed2*cos(angle2);
+	double y_speed2 = speed2*sin(angle2);
+
+	return (x_speed1*x_speed2 + y_speed1*y_speed2)/(speed1*speed2)*(min(speed1,speed2)/max(speed1,speed2));
+}
+
+//calculate the angle correlation
+double angle_correlation(double speed1, double angle1, double speed2, double angle2)
+{
+	double x_speed1 = speed1*cos(angle1);
+	double y_speed1 = speed1*sin(angle1);
+	double x_speed2 = speed2*cos(angle2);
+	double y_speed2 = speed2*sin(angle2);
+	return (x_speed1*x_speed2 + y_speed1*y_speed2)/(speed1*speed2);
+}
+
+//calculate the speed correlation
+double speed_correlation(double speed1, double speed2)
+{
+	return (min(speed1,speed2)/max(speed1,speed2));
+}
+
+#endif
+

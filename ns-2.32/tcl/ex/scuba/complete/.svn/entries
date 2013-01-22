@@ -1,0 +1,54 @@
+8
+
+dir
+147
+file:///home/hoon/svn/idrm/ns-allinone-2.32/ns-2.32/tcl/ex/scuba/complete
+file:///home/hoon/svn
+
+
+
+2010-01-20T10:58:05.263146Z
+6
+hoon
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+cc5c679f-4bc2-4865-bcce-3940cb15ceb2
+
+demo.tcl
+file
+
+
+
+
+2010-01-20T18:14:55.000000Z
+bc7303c39add7e206900e8acfd4e722a
+2010-01-20T10:58:05.263146Z
+6
+hoon
+has-props
+
+demo-nam.tcl
+file
+
+
+
+
+2010-01-20T18:14:55.000000Z
+3068265cb2dbbf43ec71c7e939cc2167
+2010-01-20T10:58:05.263146Z
+6
+hoon
+has-props
+

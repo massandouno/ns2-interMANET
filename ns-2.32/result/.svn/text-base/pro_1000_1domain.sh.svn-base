@@ -1,0 +1,10 @@
+./pro_1000x1000_1domain.sh 1
+./pro_1000x1000_1domain.sh 2
+./pro_1000x1000_1domain.sh 3
+./pro_1000x1000_1domain.sh 4
+./pro_1000x1000_1domain.sh 5
+./pro_1000x1000_1domain.sh 6
+./pro_1000x1000_1domain.sh 7
+./pro_1000x1000_1domain.sh 8
+./pro_1000x1000_1domain.sh 9
+./pro_1000x1000_1domain.sh 10

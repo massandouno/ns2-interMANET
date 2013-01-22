@@ -1,0 +1,593 @@
+/*
+ IDRM Code -- Developed by 
+ SeungHoon Lee(UCLA CS Network Research Lab, shlee@cs.ucla.edu)
+ */
+
+
+#ifndef __idrm_h__
+#define __idrm_h__
+
+#include <cmu-trace.h>
+#include <priqueue.h>
+#include <classifier/classifier-port.h>
+
+
+#include <packet.h>
+#include <ip.h>
+#include <stdarg.h>
+#include <sys/types.h>
+
+#include <config.h>
+#include <agent.h>
+#include <drop-tail.h>
+#include <trace.h>
+
+#include "lib/bsd-list.h"
+#include <rtproto/rtproto.h>
+
+
+#define MAX_IF 2
+#define IDRM_JITTER (0.005*Random::uniform())			// Random (0-5) millisec jitter for overhead in node
+#define IDRM_STARTUP_JITTER (5.0*Random::uniform())  	// Random (0-5) sec jitter for start up IDRM overhead in node as well as
+// so that not all agents start at the same time i.e. in lock step
+
+#define MAX_INTRA_GATEWAYS			200							// Max # of gateways in a domain
+#define NETWORK_DIAMETER        	30             				// for intra_beacons 30 hops
+
+
+#define NONGATEWAY 					0
+#define GATEWAY 					1
+
+#define MAX_GATEWAYS_DOMAIN 		32
+
+/*
+ * General IDRM Header - shared by all formats
+ */
+#define MAX_HOP						10//25
+#define MAX_ROUTE 					400
+#define MAX_ROUTE_PER_PACKET 		5
+
+#define IDRM_PACKET_SIZE			MAX_ROUTE_PER_PACKET  * sizeof(idrm_rt_entry) //IDRM_SH: 0614
+
+#define EIDRM						0
+#define IIDRM						1
+
+#define NUM_DST_MAX			100
+
+//IDRM_SH
+
+/*
+ * General IDRM Header - shared by all formats
+ */
+struct hdr_idrm {
+	u_int8_t					ih_type;						//header type
+	u_int8_t					n_route;						//# of routes the packet contains
+	
+	//for encapsulation: eIDRM and iIDRM
+	nsaddr_t					fdst; 							//final destination
+	packet_t					or_pkt_type;					//original pkt type
+	int							or_size;						//original pkt size 
+	int							or_id;							//original pkt id
+	int							or_idrm_type;					//original idrm type
+	int							or_dport;						//original port
+	int							or_sport;
+	int							or_hops;
+	//- My Domain
+	//- char 						Domain;
+	
+	//0902
+	int							routes;							//number of routes in my IDRM RT
+	float 						AvgHop;//cs218_idrm1
+	int							num_route;						//0301
+	bool						my_dst[NUM_DST_MAX];
+	int						my_hops[NUM_DST_MAX];
+	bool						my_reachables[NUM_DST_MAX]; //cs218_idrm2 NUM_DST
+	
+	int							my_gt_route;
+	
+	// Header access methods
+	static int					offset_; 						// required by PacketHeaderManager
+	inline static int& offset() { return offset_; }
+	inline static hdr_idrm* access(const Packet* p) {
+		return (hdr_idrm*) p->access(offset_);
+	}
+};
+
+//IDRM route entry information
+struct idrm_rt_entry {
+	int							seqno;
+	char						route_type;						//N = new route, R = normal route, D = to be deleted, U = updated route
+	
+	//for measurement
+	int							updateId;						//unique updateId 'N' or 'D'
+	
+	nsaddr_t					dst;
+	nsaddr_t					path[MAX_HOP];
+	// Mission Policy
+	
+	nsaddr_t					next_hop;
+	u_int8_t					hop_count;
+	double						recv_t;
+	double						expire_t;
+};
+
+//IDRM Message types
+enum idrmMessageType {
+	//e-IDRM Messages
+	IDRMTYPE_BEACON              					= 0x01 ,
+	IDRMTYPE_ROUTE_TABLE_REQUEST 					= 0x02 ,
+	IDRMTYPE_ROUTE_TABLE_REPLY   					= 0x03 ,
+	IDRMTYPE_ROUTE_UPDATE        					= 0x04 ,
+	IDRMTYPE_ROUTE_WITHDRAW      					= 0x05 ,
+	IDRMTYPE_DATA                					= 0x06 ,
+	IDRMTYPE_NO_ROUTE_TO_DST     					= 0x07 ,
+	
+	//i-IDRM Messages
+	IDRMTYPE_INTRA_BEACON     					    = 0x08 ,	
+	IDRMTYPE_INTRA_ROUTE_TABLE_REQUEST				= 0x09 ,	
+	IDRMTYPE_INTRA_ROUTE_REPLY						= 0x0A ,
+	IDRMTYPE_INTRA_ROUTE_UPDATE						= 0x0B ,
+	IDRMTYPE_INTRA_DATA								= 0x0C ,
+	IDRMTYPE_INTRA_NGT								= 0x0D ,
+	IDRMTYPE_INTRA_GT_TURN_OFF						= 0x0E			
+};
+
+class IDRM;
+
+enum idrmTimerType {
+	PERIODIC_BEACON_TIMER 							= 0x01, // periodic beacons (e-IDRM)
+	POLL_PULL_RT_TIMER    							= 0x02, // periodic polling agent to pull and read routing table to detect changes in it
+	MAINTAIN_RT_TIMER   							= 0x03,  
+	BROADCAST_RT_TIMER    							= 0x04,
+	PERIODIC_INTRA_BEACON_TIMER 					= 0x05, // periodic beacons (i-IDRM)
+	PERIODIC_PARTITION_DETECTION_TIMER 				= 0x06,	// detecting MANET partition..
+	RECORD_RESULT_TIMER								= 0x07,
+	//0902
+	COLLECTING_TIMER								= 0x08,
+	USING_TIMER										= 0x09,
+	INTRA_BEACON_JITTER_TIMER						= 0x0A, // cs218_idrm1
+	
+	//TRACE IDRM
+	COLLECT_RESULTS_TIMER							= 0x0B,
+	ACTIVEGATEWAY_STATS_TIMER						= 0x0C
+	
+	
+};
+
+// for size calculation of header-space reservation
+union hdr_all_idrm {
+	hdr_idrm		ih;
+	// put all the different IDRM message type structures (requests, responses, beacons etc etc) here. This union is used for a size calculation for TCL Hooks
+};
+
+
+class idrmTimer : public Handler {
+public:
+	idrmTimer(IDRM * a, idrmTimerType t) : busy_(0), agent(a), type_(t) {}
+	void			handle(Event*);
+	void			start(double time);
+	void			cancel();
+	int				busy() { return busy_; }
+	double			timeLeft();
+private:
+	Event			intr;
+	int				busy_;
+	IDRM  			*agent;
+	idrmTimerType	type_;
+};
+
+
+/*
+ The Routing Agent
+ */
+class IDRM: public Agent {
+	
+	friend class idrmTimer;
+	friend class AODV;
+	friend class DSDV_Agent;	  	//IDRM_SH
+	//friend class DSRAgent;		//DSR (will be implemented)
+	
+public:
+	IDRM(nsaddr_t id, int numifs, int my_if_id, int base_if_id);
+	void	recv(Packet *p, Handler *);
+	
+	//e-IDRM RT
+	struct idrm_rt_entry idrm_rt_table[MAX_ROUTE];
+	int		n_idrm_rt_entry;
+	
+	//i-IDRM RT
+	struct idrm_rt_entry intra_idrm_rt_table[MAX_ROUTE];
+	int		n_intra_idrm_rt_entry;
+	
+	Agent* idrm_base;
+	bool now_gateway;//cs218_idrm1
+	//cs218_idrm2: added adaptation members
+	int intra_beacon_grace; //value to keep a grace period for beacon interval change
+	int beacon_grace;
+	double intra_last_update_ts;
+	double inter_last_update_ts;
+	double lastElectionTs;
+	int* inter_nodes;
+	int* inter_nodes_old;
+	int* intra_nodes;
+	int* intra_nodes_old;
+	int intra_top_change;
+	bool* my_reachables;
+	int* others_reachables;
+	bool* excluded_reachables;
+	
+protected:
+	int     command(int, const char *const *);
+	
+	int 		myIface;											// Interface on which IDRM agent is active
+	int 		myIfaceId;											// Interface on which IDRM agent is active and the NS index number of it
+	int			numIfaces;											// Total Number of Interfaces on this node
+	nsaddr_t	myNodeId; 											// my Node Id
+	int 		baseIface;      									// Interface in which the base routing agent like AODV/DSR/DSV/TORA is running
+	Agent		*baseRAgent;										// The pointer to the actual base agent (useful to modify routing tables etc)
+	char		baseRAgentName[5]; 									// Just the routing agent tag
+	char		MANET_ID[MAX_GATEWAYS_DOMAIN];						// MANET_ID
+	
+	NsObject 	*targetlist[MAX_IF];  
+	PriQueue 	*ifqueuelist[MAX_IF];  
+	
+	// ============================================================
+	// Timer
+	void handlerTimer(idrmTimerType t);
+	int  initialized() { return 1 && target_; }
+	
+	
+	//timer
+private:
+	
+	double 		pollRTTimerSec;    									// in seconds the time to read Routing table frrom base agent
+	double		beaconTimerSec;	   									// in seconds the periodicc beacon
+	double		maintainRTTimerSec;
+	double		broadcastRTTimerSec;
+	double 		intraBeaconTimerSec;
+	double		detectPartitionTimerSec;
+	double		recordResultTimerSec;	
+	double 		intraBeaconJitterSec;//cs218_idrm1		
+	
+	
+	
+	idrmTimer	pollRTTimer;  	   									// actual event timer
+	idrmTimer	beaconTimer;       									// actual event timer
+	idrmTimer	maintainRTTimer;
+	idrmTimer	broadcastRTTimer;
+	idrmTimer	intraBeaconTimer;
+	idrmTimer	detectPartitionTimer;
+	idrmTimer	recordResultTimer;				
+	idrmTimer	intraJitterTimer;//cs218_idrm1
+	
+	void 		pollRTTimerHandler(void);							// actual handler
+	void		beaconTimerHandler(void);							// actual handler
+	void		maintainRTHandler(void);
+	void		broadcastRTHandler(void);
+	void		intraBeaconTimerHandler(void);
+	void		detectPartitionTimerHandler(void);
+	void		recordResultTimerHandler(void);	
+	void 		intraBeaconJitterTimerHandler(void);//cs218_idrm1					
+	
+	//0902
+	double		collectingTimerSec;
+	double		usingTimerSec;			
+	
+	idrmTimer 	collectingTimer;
+	idrmTimer	usingTimer;
+	
+	void		collectingTimerHandler(void);
+	void		usingTimerHandler(void);
+	
+	//TRACE_IDRM
+	double 		collectStatTimerSec;
+	double 		activeGWStatTimerSec;
+	
+	idrmTimer	collectStatTimer;
+	idrmTimer	activeGWStatTimer;
+	
+	void 		collectStatTimerHandler(void);
+	void		activeGWStatTimerHandler(void);
+	void		activeGWStatDump(void);
+	// END TRACE_IDRM
+	
+	double		pgw;
+	bool            metricHopCount;
+	void		sortingNeighbors();										//sorting intra_neighbors
+	void		makingTree();												//generating a tree
+	void		pickCenter();
+	void		resetNeighbors();
+	
+	bool collecting;
+	
+	bool 		trackRequest;
+	double		trackRequestTimer;
+	int			trackRequestNode; 
+	
+	int			myChild1, myChild2;
+	int			myParent;
+	nsaddr_t*	intra_neighbors;
+	int			num_intra_neighbors;
+	int			center;
+	
+	nsaddr_t*	sorted_intra_neighbors;
+	//0902
+	
+	//0214
+	int			election_algorithm;										 //0: static, 1:dynamic 2:all node gateway
+	int*		intra_neighbors_routes;
+	int*		sorted_gateways;
+	int			gateway_index;
+	int*		sorted_gateways_after_selection;
+	bool*		intra_neighbors_after_selection;
+	int*		sorted_gateways_routes;
+	
+	int			after_selection_num_dynamic_gateways;
+	int			after_selection_my_routes;
+	
+	double* 	intra_neighbors_ts; 						//0307
+	bool*		intra_neighbors_update; 					//0323
+	double		intra_gateway_expire;
+	
+	int			beacon_counter;
+	
+	bool*		inter_neighbors;
+	//0301
+	int*		inter_neighbors_routes;
+	int			exchange;
+	//bool recv_beacon;
+	
+	//0317
+	bool*		my_dst; //NUM_DST
+	
+	bool*		dst_from_eIDRM; //NUM_DST
+	
+	//	cs218_idrm1
+	int*		my_hops; //NUM_DST
+	int*		hops_from_eIDRM; //NUM_DST
+	float		AvgHop;
+	float*		intra_neighbors_hops;
+	short int	AHC;
+	int			MetricPolicy;
+	
+	// Initialization Routines
+	void		IniGateway();
+	void		IniMetricPolicy();
+	// Changing color
+	void		ToggleColor(void);
+	
+	// =================================================
+	// Adaptation Functions cs218_idrm2
+	void		adaptationRecalculateBeaconInterval(void);
+	void		adaptationRecalculateIntraBeaconInterval(void);
+	void		adaptationDynamicGatewayElection(void);
+	void		findBestGateways(int* the_sorted_gateways, int index);
+	
+	void		setGateway();
+	void		sortingGateways();
+	void		makingGatewayTree();
+	void		pickGatewayCenter();
+	
+	int			num_dynamic_gateways;
+	
+	int			getIndex(int index);
+	int			getReverseIndex(int index);
+	
+	int			new_gateway;
+	
+	bool		identity;
+	//cs218_idrm1
+	char		color[40];
+	//0324
+	int			num_dynamic_gateways_selected;
+	void		gateway_selection_check(nsaddr_t src, int rt, bool* gts);
+	
+	int			beaconId;  // count of number of beacons/unique ids per node
+	
+	// =================================================
+	// Base routing agent routing table READING routines
+	
+	void  		aodvRTReadTrackChanges(void); // Read and Track Changes in AODV Routing Table
+	void  		dsrRTReadTrackChanges (void); // Read and Track Changes in DSR Routing Table
+	void  		dsdvRTReadTrackChanges(void); // Read and Track Changes in DSDV Routing Table
+	void  		toraRTReadTrackChanges(void); // Read and Track Changes in TORA Routing Table
+	
+	// =================================================
+	// Base routing agent routing table UPDATING routines -- give it a destination for lookup. It will set
+	// the passed nexthop and check for "better" hopcount, expiry, sequencenumber and status
+	// return TCL_ERROR if it does not update any entry and does not add any entry. return TCL_OK if it updated or adds
+	
+	int 		aodvRTUpdateEntryWithMyInterface(nsaddr_t dst, nsaddr_t nexthop, int hopcount, int seqnum); 				//Updates to AODV RT
+	int 		dsrRTUpdateEntryWithMyInterface(nsaddr_t dst, nsaddr_t nexthop, int hopcount, int seqnum); 					//Updates to DSR RT
+	int		    dsdvRTUpdateEntryWithMyInterface(nsaddr_t dst, nsaddr_t nexthop, int hopcount, int seqnum, nsaddr_t saddr); //Updates to DSDV RT
+	int 		toraRTUpdateEntryWithMyInterface(nsaddr_t dst, nsaddr_t nexthop, int hopcount, int seqnum); 				//Updates to TORA RT
+	
+	// Packet forwarding Handle from Base routing agent (AODV/DSR/DSV/TORA) when the interface 
+	// based on the lookup during forwarding is non-default (i.e. not 0)
+	// then IDRM agent "knows" how to forward
+	// this routine is to forward the packet with the added delay
+	void 		forwardFromBaseRoutingAgent(Packet *p, double delay);
+	
+	// =================================================
+	// e-IDRM
+	void		maintainRT();
+	void		dumpRT();
+	
+	//control message handlers
+	// Mission Policy
+	void		handle_beacon(nsaddr_t neighbour_id);				// handle e-IDRM beacon
+	void		sendBeacon(void);    													// broadcast the beacon peridically
+	void		recvBeacon(Packet *p);													// receive the beacon which some node had transmitted
+	void		sendRouteTableRequest(nsaddr_t dst);    	
+	void		recvRouteTableRequest(Packet *p);	
+	void		sendRouteTable(nsaddr_t dst, int start_index); 
+	void		recvRouteTable(Packet *p);	
+	void		sendRouteUpdate(int flag); 												//update called by e-IDRM or i-IDRM
+	void		recvRouteUpdate(Packet *p);	
+	void		sendData(Packet *p, double delay); 			
+	void		recvData(Packet *p);
+	
+	
+	// =================================================
+	// i-IDRM
+	void		dumpIntraRT();
+	void		dumpBaseRT();
+	void 		maintainIntraRT();
+	
+	//control message handlers
+	void 		handle_intra_beacon(nsaddr_t neighbor_id);
+	void 		sendIntraBeacon(nsaddr_t dst);								//broadcast beacon to intra-domin
+	void	 	recvIntraBeacon(Packet *p);			
+	void		sendIntraRTRequest(nsaddr_t dst);
+	void		recvIntraRTRequest(Packet *p);
+	void 		sendIntraRTReply(nsaddr_t dst, int start_index);
+	void		recvIntraRTReply(Packet *p);
+	void		sendIntraRTUpdate(int index, nsaddr_t dst);
+	void		recvIntraRTUpdate(Packet *p);
+	void		sendIntraPacket(Packet *p, double delay);
+	void		recvIntraData(Packet *p); 
+	void		sendIntraRouteUpdate();										//updated called by only e-IDRM
+	
+	//0323
+	void		sendIntraNGT(nsaddr_t dst, int id);
+	void		recvIntraNGT(Packet *p);
+	
+	//0324
+	void		sendIntraGatewayTrunOff(nsaddr_t dst);
+	void		recvInrraGatewayTurnOff(Packet *p);
+	
+	// =================================================
+	// RT utilities
+	void		remove_route(int index);
+	void		remove_intra_route(int index);
+	void 		sendRouteUpdatebyIIDRM();
+	
+	int			intra_updated_counter;
+	int			idrm_rt_seq;
+	int			intra_idrm_rt_seq;
+	bool		from_diff_domain(nsaddr_t dst);
+	int			rt_idrm_lookup();										//count the number of external entries
+	bool		intra_lookup(nsaddr_t dst);
+	bool		base_lookup(nsaddr_t dst);
+	int			base_lookup();
+	bool		intra_updated_entry_lookup(nsaddr_t dst);
+	
+	idrm_rt_entry*  rt_lookup(nsaddr_t dst);									//table lookup
+	idrm_rt_entry*	intra_rt_lookup(nsaddr_t dst); 								//intra-RT lookup
+	nsaddr_t	intra_updated_entry[MAX_ROUTE];
+	
+	void		iIDRMtoBase();
+	void		iIDRMtoeIDRM();
+	
+	
+	//for MANET ID. not used in the current version
+	void 		update_intra_neighbors(nsaddr_t neighbor_id);
+	void		setMANET_ID();
+	void 		printPositions();
+	bool		detect_partition();
+	bool		manetIdCompare(int* in1, int* in2); //helper
+	char*		itoa(int n);
+	int			num_gateway;
+	int			num_domain_members;
+	
+	
+	// =================================================
+	// Domain information
+	nsaddr_t* 	intra_gateways;
+	double*		intra_gateways_ts;
+	int			num_intra_gateway;
+	int			gateway_lookup(nsaddr_t dst);
+	bool		isFromGateway(nsaddr_t src);
+	int			currentIntraBeacon;
+	
+	void		intra_encapsulation(Packet *p); //0709
+	
+	void		idrm_result_record(); //0623
+	char		fname[100];
+	void		dumpPacket(Packet *p);
+	
+	// =================================================
+	// For stat
+	int			n_out_beacon;
+	int			n_out_update;
+	int			n_out_table;
+	int			n_out_request;
+	int			n_out_data;
+	
+	int			n_total_out_eidrm;
+	int			n_total_out_iidrm;
+	int			n_total_out_data;
+	
+	int			s_out_beacon;
+	int			s_out_update;
+	int			s_out_table;
+	int			s_out_request;
+	int			s_out_data;
+	
+	int			s_total_out_eidrm;
+	int			s_total_out_iidrm;
+	int			s_total_out_data;	
+	
+	int			n_out_intra_beacon;
+	int			n_out_intra_update;
+	int			n_out_intra_table;
+	int			n_out_intra_request;
+	int			n_out_intra_data;
+	
+	int			s_out_intra_beacon;
+	int			s_out_intra_update;
+	int			s_out_intra_table;
+	int			s_out_intra_request;
+	int			s_out_intra_data;
+	
+	int			n_in_beacon;
+	int			n_in_update;
+	int			n_in_table;
+	int			n_in_request;
+	int			n_in_data;
+	
+	int			n_total_in_eidrm;
+	int			n_total_in_iidrm;
+	int			n_total_in_data;
+	
+	int			s_in_beacon;
+	int			s_in_update;
+	int			s_in_table;
+	int			s_in_request;
+	int			s_in_data;
+	
+	int			s_total_in_eidrm;
+	int			s_total_in_iidrm;
+	int			s_total_in_data;	
+	
+	int			n_in_intra_beacon;
+	int			n_in_intra_update;
+	int			n_in_intra_table;
+	int			n_in_intra_request;
+	int			n_in_intra_data;
+	
+	int			s_in_intra_beacon;
+	int			s_in_intra_update;
+	int			s_in_intra_table;
+	int			s_in_intra_request;
+	int			s_in_intra_data;
+	
+	void		stat_reset();
+	
+	char*		my_idrm_payload;
+	
+	//0409
+	int			num_detected_pts;
+	int			inter_neighbors_counter;
+	
+	double		base_hop_count();
+	int			dsdv_single_hops();
+	
+	PriQueue *	iqueue;
+	
+	bool decision_check;
+	int intra_count_decision;
+	
+};
+
+#endif /* __idrm_h__ */

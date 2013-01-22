@@ -1,0 +1,40 @@
+\begin{thebibliography}{1}
+
+\bibitem{AWD04review}
+M.~Abolhasan, T.~Wysocki, and E.~Dutkiewicz.
+\newblock A review of routing protocols for mobile ad hoc networks.
+\newblock {\em Ad Hoc Networks}, 2:1--22, 2004.
+
+\bibitem{chen04clustering}
+Y.~Chen, A.~Liestman, and J.~Liu.
+\newblock Clustering algorithms for ad hoc wireless networks.
+\newblock In {\em Proc. Ad Hoc and Sensor Networks '04}, 2004.
+
+\bibitem{CJV04overhead}
+T.~Clausen, P.~Jacquet, and L.~Viennot.
+\newblock Analyzing control traffic overhead versus mobility and data traffic
+  activity in mobile ad-hoc network protocols.
+\newblock {\em ACM Wireless Networks journal (Winet)}, 10(4), July 2004.
+
+\bibitem{crowcroft03plutarch}
+J.~Crowcroft, S.~Hand, R.~Mortier, T.~Roscoe, and A.~Warfield.
+\newblock Plutarch: an argument for network pluralism.
+\newblock {\em ACM Computer Communication Review}, 33(4):258--266, 2003.
+
+\bibitem{haas03sharp}
+V.~Ramasubramanian, Z.~J. Haas, and E.~G. Sirer.
+\newblock {SHARP}: A hybrid adaptive routing protocol for mobile ad hoc
+  networks.
+\newblock In {\em Proc. ACM MOBIHOC}, June 2003.
+
+\bibitem{bgp}
+Y.~Rekhter and T.~Li.
+\newblock {RFC 1771:} a {Border Gateway Protocol} 4 ({BGP}-4), March 1995.
+
+\bibitem{SEBQ04turfnet}
+S.~Schmid, L.~Eggert, M.~Brunner, and J.~Quittek.
+\newblock {TurfNet}: An architecture for dynamically composable networks.
+\newblock In {\em Proc. of 1st IFIP International Workshop on Autonomic
+  Communication (WAC 2004)}, October 2004.
+
+\end{thebibliography}

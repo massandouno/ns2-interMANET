@@ -1,0 +1,73 @@
+\subsection{i-IDRM}
+\label{sec::iidrm}
+
+\begin{algorithm}[htb!]
+\floatname{algorithm}{Pseudo code}
+\caption{Periodic intra-domain rountines}
+\label{alg:intratimer}
+{\small
+\begin{algorithmic}[1]
+\IF {(timer $>$ i-IDRM Beacon interval)}
+	\STATE send i-IDRM beacons to $G(D(i))$
+\ENDIF
+\end{algorithmic} 
+}
+\end{algorithm} 
+
+Pseudo code \ref{alg:intratimer} is a simple routine to send i-IDRM beacons
+periodically to gateways within a MANET.
+The main propose of i-IDRM beacon is to maintain $G^{\sf intra}(i)$ at different
+gateways, which will be used in pseudo code \ref{alg:intraMain} to generate new
+MANET ID when partitioned or merged happen.
+
+\begin{algorithm}[htb!]
+\floatname{algorithm}{Pseudo code}
+\caption{Main intra-domain rountine}
+\label{alg:intraMain}
+{\small
+\begin{algorithmic}[1]
+\IF {(recv i-IDRM Beacon)}
+\STATE update $G^{\sf intra}(i)$
+	\IF {($G^{\sf intra}(i)$ changed)}
+	\STATE generated new MANET ID
+	\STATE invoke e-IDRM to send route update (in pseudo code \ref{alg:interMain})
+	\ENDIF
+\ENDIF
+\STATE
+\IF {(recv i-IDRM route update packet)}
+	\STATE update IDRM route table according to MANET policy
+	\IF {(route table changed)}
+		\STATE invoke e-IDRM to send route update
+	\ENDIF 
+\ENDIF
+\STATE
+\IF {(recv e-IDRM route update from e-IDRM)}
+	\STATE send i-IDRM route update to gateways in $G^{\sf intra}(i)$
+\ENDIF 
+\STATE
+\IF {(recv data packet)}
+	\STATE handleDataPacket(pkt)  
+\ENDIF
+\end{algorithmic} 
+}
+\end{algorithm} 
+
+Pseudo code \ref{alg:intraMain} is the main routine for i-IDRM. 
+The main functions of this routine is to
+1) maintain $G^{\sf intra}(i)$, and
+2) exchange route update between  $G^{\sf intra}(i)$.
+As we describe in section \ref{x}, $G^{\sf intra}(i)$ is used to generate new
+MANET ID when a domain is partitioned or merged. 
+Once a new MANET ID is generated, 
+a route update will be sent to $G^{\sf inter}(i)$.
+When i-IDRM receives an i-IDRM route update 
+from other nodes in $G^{\sf intra}(i)$, 
+it will update the IDRM route table and 
+notify e-IDRM to propogate any updates to inter-domain gateways. 
+In i-IDRM, any updates at IDRM route table will not send to $G^{\sf intra}(i)$
+because other gateways in $G^{\sf intra}(i)$ will also received 
+the route update message from the update originator. 
+On the other hand, when i-IDRM receives an e-IDRM route update,
+i-IDRM will help e-IDRM to distribute the route update to  $G^{\sf intra}(i)$.
+
+ 

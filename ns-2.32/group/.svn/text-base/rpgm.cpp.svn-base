@@ -1,0 +1,235 @@
+//PARAMETER NEEDS TO BE CHANGED 
+//.h file	group number, node numbers
+//.cpp file  file name list
+//deviation ratio = 0.1
+#include "rpgm.h"
+#define MOTION_INTERVAL_DEFAULT 50.0
+
+int SPEED_CONFIG_COUNT;
+
+void set_checkpoints(int index, double motion_interval, int* speed_config)
+{
+        double x_point, x_tmp;
+	double y_point, y_tmp;
+	int n_ref = SIMULATION_TIME/motion_interval + 1;
+	int ref_index, speed_index;
+	int speed, trial;
+	double angle;
+
+	int min_speed;
+	int max_speed;
+
+	x_point = (rand() % (LENGTH-1)) + 1;
+	y_point = (rand() % (WIDTH-1))  + 1;
+
+	ini_x[index]= x_point;
+	ini_y[index]= y_point;
+
+	num_of_checkpoint[index]=0;
+
+	speed_index = 0;
+	for(ref_index=1;ref_index<n_ref;ref_index++)
+	{
+		double timestamp = ref_index * motion_interval;
+		
+		while( speed_index+1 < SPEED_CONFIG_COUNT && speed_config[(speed_index+1)*3] <= timestamp )
+			speed_index++;
+
+		min_speed = speed_config[speed_index*3+1];
+		max_speed = speed_config[speed_index*3+2];
+
+
+		speed = (rand() % (max_speed-min_speed+1)) + min_speed;
+
+		trial = 0;
+		do {
+			angle = (rand() % 360) * PI / 180.0;
+			x_tmp = x_point + speed * motion_interval * cos(angle) * SIMULATION_STEP;
+			y_tmp = y_point + speed * motion_interval * sin(angle) * SIMULATION_STEP;
+			trial++;
+
+			if( trial > 50 ) {
+			  printf("Error: The nodes keep trying to move out of bound due to high speed (%d). Please lower the speed.\n", speed);
+			  exit(1);
+			}
+
+		} while( x_tmp <= 0 || x_tmp >= LENGTH ||
+			 y_tmp <= 0 || y_tmp >= WIDTH );
+
+		x_point = x_tmp;
+		y_point = y_tmp;
+		
+		x_checkpoint[index][num_of_checkpoint[index]] = x_point;
+		y_checkpoint[index][num_of_checkpoint[index]] = y_point;
+
+		interval[index][num_of_checkpoint[index]] = motion_interval;
+		num_of_checkpoint[index]++;
+	}
+
+	current_checkpoint[index] = 0;
+}
+
+int main(int argc, char** argv)
+{
+	int i,j,k;
+	FILE *position_fp;
+	FILE *output_fp;
+
+	double motion_interval=MOTION_INTERVAL_DEFAULT;
+	char *speedstr;
+	int speedstr_len;
+
+	if( argc != 11 ) {
+		printf("parmaters incorrect\n");
+		return(1);
+	}
+
+	LENGTH = atoi(argv[1]);
+	WIDTH  = atoi(argv[2]);
+	SEED   = atoi(argv[3]);
+
+	srand(SEED);
+
+	SIMULATION_TIME = atoi(argv[4]);
+
+	if( SIMULATION_TIME <= 0 || SIMULATION_TIME > MAX_SIMULATION_TIME ) {
+	  printf("Bad simulation time %d. It must be between [1, %d]\n", SIMULATION_TIME, MAX_SIMULATION_TIME);
+	  return(1);
+	}
+
+	speedstr = argv[5];
+	for(i=0, speedstr_len=0, SPEED_CONFIG_COUNT=1;speedstr[i]!='\0';i++) {
+		if(speedstr[i]==':')
+			SPEED_CONFIG_COUNT++;
+		speedstr_len++;
+	}
+
+	int* speed_config = new int[SPEED_CONFIG_COUNT*3];
+
+	for(i=0;i<SPEED_CONFIG_COUNT;i++) {
+		speed_config[i*3]   = -1;
+		speed_config[i*3+1] = -1;
+		speed_config[i*3+2] = -1;
+	}
+
+	char buffer[256];
+	for(i=0, j=0, k=0;i<=speedstr_len;i++) {
+		if(i==speedstr_len || speedstr[i]==':') {
+			buffer[k] = '\0';
+			speed_config[j*3] = j * (SIMULATION_TIME / SPEED_CONFIG_COUNT);
+			speed_config[j*3+2] = atoi(buffer);
+			if( speed_config[j*3+1] == -1 )
+				speed_config[j*3+1] = speed_config[j*3+2];
+			k = 0;
+			j++;
+		}
+		else if( speedstr[i]=='-' ) {
+			buffer[k] = '\0';
+			speed_config[j*3+1] = atoi(buffer);
+			k = 0;
+		}
+		else {
+			buffer[k] = speedstr[i];
+			k++;
+		}
+	}
+
+	GROUP_NUMBERS = atoi(argv[6]);
+	NODE_NUMBERS = atoi(argv[7]);
+	//idrm
+	SPEED_DEVIATION = atof(argv[8]); // 30.0
+	ANGLE_DEVIATION = atof(argv[9]); // PI / 3
+
+	char complete_name[256];
+	char file_name[256];
+	strcpy(file_name, argv[10]);
+
+	///////////////////////////////////////////////////
+	mobilenode = new class Node* [GROUP_NUMBERS];
+	for(i=0;i<GROUP_NUMBERS;i++)
+		mobilenode[i] = new class Node[NODE_NUMBERS];
+
+	main_angle = new double[GROUP_NUMBERS];	//leader's angle
+	main_speed = new double[GROUP_NUMBERS];	//leader's speed
+	current_checkpoint = new int[GROUP_NUMBERS];
+	num_of_checkpoint = new int[GROUP_NUMBERS];
+	next_stop_time = new int[GROUP_NUMBERS];
+
+	ini_x = new double[GROUP_NUMBERS];
+	ini_y = new double[GROUP_NUMBERS];
+
+	x_checkpoint = new double* [GROUP_NUMBERS];
+	for(i=0;i<GROUP_NUMBERS;i++)
+		x_checkpoint[i] = new double[MAXNUM_CHECKPOINT];
+
+	y_checkpoint = new double* [GROUP_NUMBERS];
+	for(i=0;i<GROUP_NUMBERS;i++)
+		y_checkpoint[i] = new double[MAXNUM_CHECKPOINT];
+
+	interval = new double* [GROUP_NUMBERS];
+	for(i=0;i<GROUP_NUMBERS;i++)
+		interval[i] = new double[MAXNUM_CHECKPOINT];
+
+	sprintf(complete_name, "%s.position", file_name);
+	position_fp = fopen(complete_name,"w");
+	sprintf(complete_name, "%s.movement", file_name);
+	output_fp =   fopen(complete_name,"w");
+	
+	if(output_fp == NULL)
+	{
+		printf("Error opening output file!\n");
+		exit(1);
+	}
+
+	for(i=0;i<GROUP_NUMBERS;i++)
+		set_checkpoints(i, motion_interval, speed_config);
+
+	for(i=0;i<GROUP_NUMBERS;i++)
+		for(j=0;j<NODE_NUMBERS;j++)
+			mobilenode[i][j].initialize(i,j,position_fp);
+
+
+	for(i=0;i<GROUP_NUMBERS;i++)
+	{
+		next_stop_time[i]=0;
+		current_checkpoint[i]=0;
+	}
+
+	current_clock=0;
+	while(current_clock < SIMULATION_TIME)
+	{
+		for(i=0;i<GROUP_NUMBERS;i++)
+			for(j=0;j<NODE_NUMBERS;j++)
+				mobilenode[i][j].update(i,j);
+
+		current_clock++;
+	}
+
+
+	for(i=SIMULATION_TIME-1;i>-1;i--)
+		for(j=0;j<GROUP_NUMBERS;j++)
+			for(k=0;k<NODE_NUMBERS;k++)
+				mobilenode[j][k].save_trace(output_fp,i); 
+		
+	fclose(position_fp);
+	fclose(output_fp);
+	for(i=0;i<GROUP_NUMBERS;i++){
+		delete [] mobilenode[i];
+		delete [] x_checkpoint[i];
+		delete [] y_checkpoint[i];
+		delete [] interval[i];
+	}
+
+	delete [] main_angle;
+	delete [] main_speed;	
+	delete [] current_checkpoint;
+	delete [] num_of_checkpoint;
+	delete [] next_stop_time;
+	delete [] ini_x;
+	delete [] ini_y;
+	delete [] speed_config;
+
+	return(0);
+}
+
+

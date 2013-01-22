@@ -1,0 +1,192 @@
+\subsection{Protocol Specification}
+\label{sec::protocol}
+
+This section describes the inter-domain routing protocol of IDRM
+in pseudo codes. We present three algorithms to be executed at each
+gateway. Algorithm 1 is a subroutine to generate route updates
+(including route announcement and withdrawal). Algorithm 2 is a continual process of
+a gateway to handle the interaction between inter-domain
+gateways. Algorithm 3 is a continual process to manage the
+intra-domain membership.
+
+For a gateway $i$ in a domain $A$, let $G^{\sf intra}(i)$ denote a set
+consisting of the intra-domain gateways to that $i$ has connectivity,
+and $G^{\sf inter}(i)$ denote a set consisting of the inter-domain
+gateways $i$ is directly connected. Let $M(i)$ denote the set of
+intra-domain members to that $i$ has connectivity.
+
+
+\begin{algorithm}[htb!]
+\caption{Route Announcement Update}
+\label{alg:announce}
+{\small
+\begin{algorithmic}
+\STATE need\_update $\leftarrow$ FALSE
+\STATE // store old route annoucement for withdrawal
+\IF{([MD, {\bf path}] $\ne$ NULL)}
+\STATE withdraw[MD, {\bf path}] $\leftarrow$ [MD, {\bf path}]
+\ENDIF
+\IF{(any change in $G^{\sf intra}(i)$)}
+\STATE // generate a new MANET\_ID
+\STATE MANET\_ID $\leftarrow f(A, G^{\sf intra}(i))$
+\STATE need\_update $\leftarrow$ TRUE 
+\STATE // else MANET\_ID does not change
+\ENDIF
+\IF{(any change in $M(i)$)} 
+\STATE // generate a new membership digest
+\STATE MD $\leftarrow b(M(i))$
+\STATE need\_update $\leftarrow$ TRUE 
+\STATE // else the membership digest does not change
+\ENDIF
+\STATE {\bf path} $\leftarrow$ \{MANET\_ID\}
+\STATE return a new route announcement [MD, {\bf path}]
+\end{algorithmic} 
+}
+\end{algorithm} 
+
+
+Algorithm 1 checks any change in the membership of $G^{\sf intra}(i)$
+and $M(i)$, and generate a new route announcement if necessary, and a
+route withdrawal that uses old membership information and MANET
+ID. Here, the function $f$ denotes a one-way hash function (e.g., MD5)
+to create a MANET\_ID based on the original domain ID, and the set of
+gateways, and the membership digest based on $M(i)$.
+%%(seeSection~\ref{sec::membership} for how to obtain $M(i)$)
+%Function $b$ can be configured to either return a plain membership list or a membership summary (e.g., using a Bloom filter).
+%% For secure communications of route
+%% announcements, we can use keyed hash functions for $H$ and
+%% synchronously update the keys periodically so that unauthorized node
+%% cannot generate a fake membership digest. 
+%[Starsky: removed as not related]
+%One practical concern is securing the route updates to prevent attacks
+% on routing table. Securing the route updates and other aspects of
+% path vector protocol in MANETs is a future research topic.
+% %which will be briefly discussed in Section~\ref{sec::discussion}.
+
+\begin{algorithm}[htb!]
+\caption{Main Routine of the Gateway}
+\label{alg:newconn}
+{\small
+\begin{algorithmic}
+\WHILE{(true)}
+\IF {(timer $>$ announcement interval)}
+\STATE // generate a new route announcement
+\STATE call Algorithm 1
+\IF  {need\_update}
+\IF  {withdraw[MD, {\bf path}] $\ne$ NULL}
+\STATE send withdrawal withdraw[MD, {\bf path}] to $G^{\sf inter}(i)$
+\STATE withdraw[MD, {\bf path}]  $\leftarrow$ NULL
+\ENDIF
+\STATE send route announcement [MD, {\bf path}] to $G^{\sf inter}(i)$
+\ENDIF
+\ENDIF
+\STATE // propagate route withdrawal 
+\IF {(received a route withdrawal withdraw[MD, {\bf path}])}
+\STATE // update the path vector
+\STATE delete [MD, {\bf path}]
+\STATE {\bf path} $\leftarrow$ append (MANET\_ID, {\bf path})
+\STATE announce withdraw[MD, {\bf path}] to $G^{\sf inter}(i) \cup G^{\sf intra}(i)$
+\ENDIF
+\STATE // propagate route announcement 
+\IF {(received a route announcement [MD, {\bf path}])}
+\IF {(announcement from $g^{\sf new}$ not in $G^{\sf inter}(i)$)}
+\STATE // new connected inter-domain gateway found
+\STATE $G^{\sf inter}(i) \leftarrow G^{\sf inter}(i) \cup \{ g^{\sf new} \}$
+\ENDIF
+%\IF {(route in {\bf path} is allowed by local policy)}
+\IF {((no route to MD) OR ({\bf path} $\prec$ route to MD))}
+\STATE // update the path vector
+\STATE insert [MD, {\bf path}] at the top
+\STATE {\bf path} $\leftarrow$ append (MANET\_ID, {\bf path})
+\STATE announce [MD, {\bf path}] to $G^{\sf inter}(i) \cup G^{\sf intra}(i)$
+\ENDIF
+\ENDIF
+%\ENDIF
+\STATE increment timer and sleep
+\ENDWHILE
+\end{algorithmic}  
+}
+\end{algorithm} 
+
+
+
+Algorithm 2 presents the main function of a gateway participating in
+IDRM. The main routine consists of two parts. First, it periodically
+polls its domain status, generates a new route announcement or route
+withdrawal, and broadcasts the route updates to its neighbouring
+inter-domain gateways. Second, it wakes up when a new route withdrawal
+or announcement is received from one of its neighbours and process
+them. In the route announcement, {\bf path} is an ordered list of
+MANET\_IDs, i.e., [MANET\_ID$_1$, $\ldots$, MANET\_ID$_n$], which
+indicates the nodes in MD can be reached by traversing MANET\_ID$_1$,
+then MANET\_ID$_2$, $\ldots$, and finally MANET\_ID$_n$.  When it
+processes a route withdrawal, it first deletes the path vector as
+indicated by route withdrawal, and then propagate the route withdrawal
+by appending its MANET ID.  When it processes a route announcement, it
+first examines if the origin of the announcement is already in its
+list of neighbours. If it is a new neighbour it updates the list. Then
+it compares the new path information using its inter-domain routing
+policy. If the route specified in the {\bf path} is allowed and is
+more preferable than the current route to MD based on inter-domain
+routing policy (i.e., {\bf path} $\prec$ route to MD), the gateway
+updates its routing table by inserting the new route to the top
+(assuming that the preference of a route is determined by the order in
+the routing table), and then appends its own MANET ID in front of {\bf
+path} and rebroadcasts the information to its neighbours.
+
+
+
+\begin{algorithm}[htb!] 
+\caption{Beaconing among Intra-domain Gateways}
+\label{alg2}
+{\small
+\begin{algorithmic}
+%\STATE {\em Initialization}: Endowed with $G^{\sf intra}(i)$
+\WHILE{(true)}
+\IF{(timer $>$ beacon interval)}
+\STATE send beacons to every gateway in $G^{\sf intra}(i)$
+\ENDIF
+%\STATE set {\sf Connected\_Gateways} = empty
+\FORALL {(gateway $g$ in $G^{\sf intra}(i)$)}
+\IF {(no beacons from $g$ within time limit)}
+\STATE // network has partitioned
+\STATE $G^{\sf intra}(i) \leftarrow G^{\sf intra}(i) \backslash \{ g \}$
+\STATE raise change flag
+%\STATE call {\bf Algorithm} 1, generate route announcement; 
+\ENDIF
+\ENDFOR
+\IF{(received a beacon from $g$ not in $G^{\sf intra}(i)$)}
+\STATE // network merge event OR new gateway
+%\STATE forward the beacon from $g$ to $G^{\sf intra}(i)$
+\STATE $G^{\sf intra}(i) \leftarrow G^{\sf intra}(i) \cup \{ g \}$
+\STATE raise change flag
+%\STATE call {\bf Algorithm} 1, generate route announcement; 
+\ENDIF
+\IF{(change flag is up)}
+\STATE // generate a new route announcement 
+\STATE call Algorithm 1
+\STATE send the route announcement to $G^{\sf inter}(i)$
+\STATE reset change flag 
+\ENDIF
+\STATE increment timer and sleep
+\ENDWHILE
+\end{algorithmic} 
+} 
+\end{algorithm} %
+
+
+
+
+Algorithm 3 is a separate thread that takes care of the exchange of
+beacons among the gateways in the same domain. Periodically, a gateway
+sends out a beacon to all intra-domain gateways notifying its
+presence. When it does not receive a beacon from one or more of the
+gateways in its intra-domain, it updates $G^{\sf intra}(i)$. Similarly, when it
+receives a beacon from a gateway $g$ that is not currently in the list
+of intra-domain gateways, it updates its entry. When these changes are
+detected, the gateway initiates a route announcement process to update
+its neighbours.
+
+
+\input{eIDRM}
+\input{iIDRM}

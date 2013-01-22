@@ -1,0 +1,354 @@
+#ifndef RPGM_H_
+#define RPGM_H_
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include "misc.h"
+
+
+//key parameters
+
+
+//definations
+#define PI 3.1415926
+
+// each checkpoint trace has most 100 points
+#define MAXNUM_CHECKPOINT 10000
+
+//#define SIMULATION_TIME 1501
+#define MAX_SIMULATION_TIME 3000
+#define SIMULATION_STEP 1
+#define PAUSE_TIME 5
+
+int LENGTH;
+int WIDTH;
+int SEED;
+int SIMULATION_TIME;
+int GROUP_NUMBERS;
+int NODE_NUMBERS;
+
+#define SPARSE_SPACE 50
+
+//#define SPEED_DEVIATION 30
+//#define ANGLE_DEVIATION 180;
+
+
+#define LEADER 1
+#define SOLDIER 0
+
+float ANGLE_DEVIATION;
+float SPEED_DEVIATION;
+
+
+//global variable
+double* main_angle;	//leader's angle
+double* main_speed;	//leader's speed
+int* current_checkpoint;
+int* num_of_checkpoint;
+int* next_stop_time;
+
+double** x_checkpoint;
+double** y_checkpoint;
+double** interval;
+
+double *ini_x,*ini_y;
+
+double speed_dev_ratio=1.0;
+double angle_dev_ratio=0.1;
+
+int current_clock=0;
+
+
+
+
+
+//class specification
+class Node{
+	private:
+		int id;		//global id = group_id * NODE_NUMBERS + node_id in group	
+		int level;  //1 leader; 0 soldier
+		int group_id;	//group id (to which group this node belongs)
+	
+		double src_x,src_y;
+		double dest_x,dest_y;
+		double current_x,current_y;
+		double next_x,next_y;
+		double speed;
+		double angle;
+
+		double x_array[MAX_SIMULATION_TIME],y_array[MAX_SIMULATION_TIME];
+		double speed_array[MAX_SIMULATION_TIME],angle_array[MAX_SIMULATION_TIME];
+		double nextx_array[MAX_SIMULATION_TIME],nexty_array[MAX_SIMULATION_TIME];
+
+		void set_angle(int i);
+		void set_speed(int i);
+		void set_next_x();
+		void set_next_y();
+
+	public:
+		Node();
+		//~Node();
+		void initialize(int i,int j,FILE *fp);	//i is group_id, j is node_id
+		void update(int i,int j);		//i is group_id, j is node_id
+		void save_trace(FILE *out_fp,int i);
+		void show_trace();
+		double get_speed();
+		double get_angle();
+};
+
+class Node** mobilenode;
+
+
+/*
+class Check{
+	private:
+		double x_position[MAXNUM_CHECKPOINT],y_position[MAXNUM_CHECKPOINT];
+		double interval[MAXNUM_CHECKPOINT];
+	public:
+		void read_file(int i,char *filename);	//i is group_id;
+		double get_check_x(int i,int j);  // i is group_id,j is time slot
+		double get_check_y(int i,int j);
+		double get_check_inteval(int i, int j);
+};
+class Check checkpoint[GROUP_NUMBERS];
+*/
+
+
+//Membership function
+Node::Node()
+{
+}
+
+void Node::initialize(int i,int j,FILE* fp)
+{
+	id=i*NODE_NUMBERS+j;
+	group_id=i;
+	if(j==0)
+		level=LEADER;
+	else
+		level=SOLDIER;
+
+	if(level==LEADER){
+		src_x=ini_x[i];	src_y=ini_y[i];}
+	else{
+		src_x=ini_x[i]+new_random1()*SPARSE_SPACE;
+		src_y=ini_y[i]+new_random1()*SPARSE_SPACE;}
+	
+	//if( src_x<0 || src_x>WIDTH )
+	//	src_x = ini_x[i];
+	//if( src_y<0 || src_y>LENGTH )
+	//	src_y = ini_y[i];
+
+	fprintf(fp,"set topo(%d,group_id) %d\n", id, group_id);
+	fprintf(fp,"set topo(%d,start_x) %lf\n", id, src_x);
+	fprintf(fp,"set topo(%d,start_y) %lf\n", id, src_y);
+
+	current_x=src_x; current_y=src_y;
+	next_x=src_x; next_y=src_y;
+	//set_next_x(); set_next_y();  //set_angle(); set_speed();
+}
+
+
+double get_main_angle(int i, int checkpoint)	//i is group id, 
+{
+	double distance_x,distance_y;
+	double leader_angle =0.0;
+
+	if(current_checkpoint[i]==0){
+		distance_x=double(x_checkpoint[i][checkpoint]-ini_x[i]);
+		distance_y=double(y_checkpoint[i][checkpoint]-ini_y[i]);
+	}
+	else {
+		distance_x=double(x_checkpoint[i][checkpoint]-x_checkpoint[i][checkpoint-1]);
+		distance_y=double(y_checkpoint[i][checkpoint]-y_checkpoint[i][checkpoint-1]);
+	}
+
+	if(distance_y==0 && distance_x==0)
+		leader_angle= 0;
+	else if(distance_y>0 && distance_x==0)
+		leader_angle= PI/2;
+	else if(distance_y<0 && distance_x==0)
+		leader_angle= -PI/2;
+	else if (distance_y>0 && distance_x>0)   //1
+		leader_angle=atan((distance_y)/(distance_x));
+	else if (distance_y<0 && distance_x>0)  //4 
+		leader_angle=atan((distance_y)/(distance_x));
+	else if (distance_y>0 && distance_x<0)   //2
+		leader_angle=atan((distance_y)/(distance_x))+PI;
+	else if (distance_y<0 && distance_x<0)    //3
+		leader_angle=atan((distance_y)/(distance_x))-PI;	
+
+	return leader_angle;
+}
+
+double get_main_speed(int i, int checkpoint)
+{
+	double distance_x,distance_y,distance;
+	double leader_speed;
+
+	if(current_checkpoint[i]==0){
+		distance_x=double(x_checkpoint[i][checkpoint]-ini_x[i]);
+		distance_y=double(y_checkpoint[i][checkpoint]-ini_y[i]);
+	}
+	else {
+		distance_x=double(x_checkpoint[i][checkpoint]-x_checkpoint[i][checkpoint-1]);
+		distance_y=double(y_checkpoint[i][checkpoint]-y_checkpoint[i][checkpoint-1]);
+	}
+
+	distance = sqrt( (distance_x*distance_x+distance_y*distance_y) );
+	leader_speed =distance/interval[i][checkpoint];
+
+	return leader_speed;
+}
+
+
+void Node::set_angle(int i)		//i is group id
+{
+	if(current_checkpoint[i]>num_of_checkpoint[i])
+	{	printf("EXCEED the checkpoint file, WRONG!");
+				//bugs!
+		//exit(0);
+	}
+
+	if(level==LEADER){
+		main_angle[i] = get_main_angle(i,current_checkpoint[i]);
+		angle = main_angle[i];	 }
+	else {
+		//printf("main_angle=%f, ",main_angle);
+		if(new_random2()>=0)
+			angle = main_angle[i] + new_random2() * ANGLE_DEVIATION * angle_dev_ratio;
+		else
+			angle = main_angle[i] - new_random2() * ANGLE_DEVIATION * angle_dev_ratio;
+		//printf("abgle= %f + %f\n", main_angle,ANGLE_DEVIATION*angle_dev_ratio);
+	}
+}
+
+void Node::set_speed(int i)
+{
+	
+	if(level==LEADER)
+	{
+		main_speed[i] = get_main_speed(i,current_checkpoint[i]);
+		speed = main_speed[i];
+	}
+	else{
+		//printf("main_speed=%f\n",main_speed);
+	        speed = main_speed[i] + new_random1() * SPEED_DEVIATION * speed_dev_ratio;
+		if(speed<0)
+		    speed = 0;
+		//printf("speed= %f + %f\n", main_speed,SPEED_DEVIATION*speed_dev_ratio);
+	}
+}
+
+void Node::set_next_x()
+{	next_x = current_x + speed * cos(angle) * SIMULATION_STEP;
+	if(next_x <= 0.0)
+		next_x = 0.1;
+	else if(next_x >= WIDTH)
+		next_x = WIDTH - 0.1;
+}
+
+void Node::set_next_y()
+{	next_y = current_y + speed * sin(angle) * SIMULATION_STEP;
+	if(next_y <= 0.0)
+		next_y = 0.1;
+	else if(next_y >= WIDTH)
+		next_y = WIDTH - 0.1;
+}
+
+
+void Node::update(int i,int j)
+{
+	current_x = next_x;
+	current_y = next_y;
+
+	if(level==LEADER)	//for group leader
+	{
+		if(current_clock >= next_stop_time[i]){
+			set_angle(i);	set_speed(i);
+			set_next_x();	set_next_y();
+			next_stop_time[i] = next_stop_time[i] + (int)(interval[i][current_checkpoint[i]]+1);
+			current_checkpoint[i]++;
+		}
+		else{
+			set_next_x();	set_next_y();
+		}
+	}
+	else{	//for group member
+		set_angle(i);	set_speed(i);
+		set_next_x();	set_next_y();
+	}
+	x_array[current_clock]=current_x;
+	y_array[current_clock]=current_y;
+	speed_array[current_clock]=speed;
+	angle_array[current_clock]=angle;
+	nextx_array[current_clock]=next_x;
+	nexty_array[current_clock]=next_y;
+
+
+/*	if(current_clock < next_stop_time){
+		set_next_x();
+		set_next_y();
+	}
+	else{
+		if(level==LEADER)
+		{//?
+			set_angle();
+			set_speed();
+			set_next_x();
+			set_next_y();
+		
+			next_stop_time = next_stop_time + (int)interval[current_checkpoint];
+			current_checkpoint++;
+		}
+		else if(level==SOLDIER){
+			printf("soldier is working\n");
+			set_angle();
+			set_speed();
+			set_next_x();
+			set_next_y();
+		}
+	}
+*/
+
+}
+
+double Node::get_angle()
+{	return angle;	}
+
+double Node::get_speed()
+{	return speed;	}
+
+
+void Node::show_trace()
+{
+//
+}
+
+void Node::save_trace(FILE *out_fp,int i)
+{
+	char temp='"';
+	double x, y;
+
+	x = (double) nextx_array[i];
+	y = (double) nexty_array[i];
+
+	// bounce check
+	if( x <= 0 )
+		x = 0.1;
+	else if( x >= LENGTH )
+		x = LENGTH - 0.1;
+
+	if( y <= 0 )
+		y = 0.1;
+	else if( y >= WIDTH )
+		y = WIDTH - 0.1;
+
+	//fprintf(out_fp,"$ns_ at %lf %c$node(%d) setdest %lf %lf %lf%c\n",(double)current_clock,temp,id,(double)next_x,(double)next_y,(double)speed,temp);
+	fprintf(out_fp,"$ns at %lf %c$node(%d) setdest %lf %lf %lf%c\n",(double)i,temp,id,x,y,(double)speed_array[i],temp);
+}
+#endif
+

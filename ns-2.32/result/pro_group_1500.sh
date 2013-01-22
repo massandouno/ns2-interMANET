@@ -1,0 +1,10 @@
+#./pro_group_1500x1500.sh 1
+#./pro_group_1500x1500.sh 2
+#./pro_group_1500x1500.sh 3
+./pro_group_1500x1500.sh 4
+./pro_group_1500x1500.sh 5
+./pro_group_1500x1500.sh 6
+./pro_group_1500x1500.sh 7
+./pro_group_1500x1500.sh 8
+./pro_group_1500x1500.sh 9
+./pro_group_1500x1500.sh 10

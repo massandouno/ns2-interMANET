@@ -1,0 +1,152 @@
+\section{Design of IDRM}
+\label{sec::design}
+
+In this section, we present the design of a networking framework called IDRM ({I}nter-{D}omain {R}outing for {M}ANETs) to support opaque interoperations among multiple domains of MANETs. 
+In this framework, each domain retains administrative control within its own domain while participating in collaboration. 
+%A domain may consist of multiple MANETs. A MANET is a connected directed graph with nodes belonging to the {\em same} domain.\footnote{\small We shall use ``MANET'' to denote a physical network component, and use ``domain'' to denote a logical grouping throughout this paper. For example, there may be multiple MANETs of a single domain due to a network partition as illustrated in Figure~\ref{fig:challenges2}.} 
+To enable inter-domain communications, IDRM requires special nodes as {\em gateways}.  The role of gateways is more than just handling inter-domain routing; they need to bridge any technical seam that may exist between MANETs at physical, MAC, and network layers. 
+%For example, they may need to speak multiple radio technologies, understand different MAC layer interaction, or translate between different protocols. 
+However, the main focus of this paper is limited to the inter-domain routing functions of the gateways. A non-gateway node does not participate in the communication with the nodes in another domain. Thus multiple MANET domains may operate in the same region. 
+
+%IDRM employs a path vector protocol to support a policy-based routing similar to BGP where each domain can define arbitrary policies on its preferences on domain-level paths. In order to balance the trade-off between overhead and performance, we design IDRM to proactively support the internal gateway detection and make use of partial internal network knowledge for detecting network partitioning and merging, but do not require complete knowledge of reachable destinations and internal routes. In this way, we can assure that the core inter-domain route information is shared among gateways and major network events such as network partition and merge can be detected timely. 
+
+\subsection{Design Issues}
+
+%We represent each mobile node by a unique node ID in lower case (e.g., $a_1,a_2$), and each domain by a unique domain ID in upper case (e.g., $A, B$). 
+%For the simplicity of exposition, we assume each node belongs to only one domain, and there exists naming service that translates a name to an ID (e.g., \cite{SEBQ04turfnet}). When a sender wants to send a packet to a destination, it can obtain the ID of the destination.
+%In each domain, there are a subset of nodes functioning as gateways.  A non-gateway node does not participate in the communication between the nodes in another domain so that multiple MANET domains may operate in the same region. 
+%A MANET is a connected directed graph with nodes belonging to the {\em same} domain.\footnote{\small We shall use ``MANET'' to denote a physical network component, and use ``domain'' to denote a logical grouping throughout this paper. For example, there may be multiple MANETs of a single domain due to a network partition as illustrated in Figure~\ref{fig:challenges2}.}
+
+Now we explain the key design points of the IDRM. There are several issues that we need to handle: (1) partition and merge of domains, (2) membership announcement, (3) support for policy-based routing, and (4) data plane operations. The first two points are due to node mobility and dynamic topology, and the latter two are general issues with inter-domain routing with autonomy of each domain.
+
+\subsubsection{Handling Domain-level Topology Changes} 
+
+As discussed in the previous section, one of the key challenges for inter-domain routing in MANET is dynamic changes of the network topology. In particular, a single domain may be partitioned into multiple MANETs due to node mobility and the gateways in the domain must detect the event.
+%Consider the case in Figure~\ref{fig:challenges1} when a domain A has split into two networks. In this case, the gateways in domain A first need to discover the partition.  
+In a domain where the intra-domain routing protocol is proactive, this event will be eventually detected via route updates. For a domain with a reactive intra-domain routing protocol, however, this event may not be detected for a long time. To handle this problem, in IDRM, the gateways maintain soft state by periodically sending beacons to each other. The period of beacon can be adaptively set based on the mobility of the nodes and the rate of topology change.
+
+After detecting a partition, the gateways in the same partition should generate a new MANET ID so that the new partition can be uniquely identified. By dynamically assigning a new ID, we can prevent the path vector routing algorithm from mistakenly considering the route via partitioned networks as a loop.\footnote{\small It is possible to extend this basic protocol to include a leader election process and let the leader of a domain coordinate intra-domain operations (e.g., hierarchical beaconing among gateways, or MANET ID generation). But we do not discuss such schemes here for simplicity.}
+%We want this computation can be performed independently at
+%each gateway so that control traffic is minimized, yet all the
+%gateways in the same partition to generate the same ID. At the same
+%time, we also want the collision of IDs of different networks to be as
+%low as possible. 
+This computation should be performed independently at each gateway in the way that (1) all the gateways in the same partition to generate the same ID, and (2) the collision of IDs of different networks to be as low as possible. One way to achieve these goals is to use a pseudo random number generator to create a new ID using the IDs of all the gateways in the network as input. The gateways in the same partition use a simple hash function (e.g., MD5) to generate a random number, then prefix it by the domain ID to get a new MANET ID. We encode the domain ID in the new MANET to support a dynamic policy translation (as discussed in \ref{sec::policy} and \cite{policy08}). 
+%In the paper, for clarity, we use an explicit notation that looks like $[A$:$a_1$:$a_2$:$\cdots$:$a_n]$, where $A$ is the original domain ID and $a_1,..., a_n$ are the IDs of gateways in the partition. 
+Conversely, when multiple partitioned MANETs come close and get re-connected, this condition should be detected by the gateways and a new ID for the merged MANET should be generated. This follows the same process as the case of network partitioning.
+
+\subsubsection{Membership Management and Announcement} \label{sec::membership}
+
+Periodically gateways should advertise the IDs of the nodes that they can reach; for this the gateways need to collect the IDs of all the nodes in the MANET for advertisement of the membership to other domains. As we pointed out earlier, in MANETs we cannot rely on IP prefix for routing between domains due to arbitrary partitions and merges. There are two possible approaches to deal with the situation. First, the gateways can coordinate and reassign the node IDs so that each MANETs can have a unique prefix every time a topology change occurs. However, this will incur significant management overhead (e.g., to generate unique prefix, generate unique node IDs, to update name-to-ID mapping) and thus will only be useful when the new topology will remain unchanged for a relatively long time.
+
+Second, a more practical approach to handle topology changes is to let the gateways in partitioned networks advertise the membership information, and this membership digest is used for inter-domain routing. For a reasonable size MANET with less than 1000 nodes, we find that a plain membership digest containing a set of node IDs (e.g., IP addresses) without any compression is better than a more scalable solution \cite{idrm_tech}.
+%(e.g., based on a Bloom filter \cite{BM04bloom}). 
+Obviously, the second approach (based on membership digest) can cope with network dynamics better and is more graceful when partitioned MANETs merge (by just merging the memberships). Hence, we employ the second approach in IDRM.
+
+Keeping track of the non-gateway membership in a domain poses a similar challenge to network partition detection; in a reactive routing domain, a gateway may have a stale view of its membership, and can only discover the membership change when it has data to transfer. Although we can periodically perform a membership query, this can be potentially expensive. Thus instead, we let a reactive domain only initiate a membership query when there is an indication that its membership may have changed, e.g., a node in the membership digest cannot be reached, {\em and} a timeout period has passed.
+
+\subsubsection{Policy Support} \label{sec::policy}
+
+Inter-domain routing policy is enforced in a similar same way as in BGP. By exchanging route updates (announcements and withdrawal) in a path vector protocol, inter-domain routing policies will be translated as the decisions of filtering and selecting routes at gateways. Using a path vector protocol, if a gateway $a_1$ in domain A is willing to provide a transit service to a neighboring domain $B$ for a destination with node ID $c_1$, then $a_1$ appends its MANET ID to the route announcement of the selected path to $c_1$ and announces it to a connected gateway $b_1$ in domain $B$. Upon receiving the announcement, $b_1$ will decide if this path is more preferable than the current using path to $c_1$ based on its routing policy. If a new path is selected, $b_1$ will record the source of announcement as $a_1$ and distributes the announcement to other internal gateways in the MANET.
+
+There are a variety of ways to specify routing policy rules. For example, in a next-hop-based policy specification, gateways will select paths only based on the next-hop domain in the route announcement (based on commercial relations like customer, provider, or peer). In a path-based specification, a domain will specify a complete ordered preference of all the acyclic domain-level paths; paths with higher rank are more preferable. In a cost-based specification, a domain will assign a numerical cost to every other domain as a subjective evaluation of the performance. Gateways will select the paths with the minimum total cost of all the downstream domains. In our design, we do not restrict the way inter-domain policies could be specified, but we assume that a next hop specification is used in our description.
+
+One important issue to address in MANETs is that these routing policies are defined by network operators as static rules. Now in a MANET environment, a single domain may partition into multiple networks (e.g., a domain $A$ breaks down into $A_1$ and $A_2$). Thus it is necessary to have a mechanism to automatically translate the original policy when such topology change happens. In \cite{policy08}, we have reported preliminary results on how to translate the static policies when a domain partitions under the next-hop-based specification and the cost-based specification. We refer the reader to \cite{policy08} for more discussion on this topic. In general, designing a mechanism to handle dynamic policy translation for MANETs is an interesting topic requiring further research.
+
+\subsubsection{Data Plane Operations} 
+
+%The packet forwarding process in the data plane will make use of the
+%routing information collected from the above control plane operations.
+%i.e., membership announcements between gateways, the domain-level topology exchange.
+
+% [Starsky] comment out as it may be confusing
+%The control plane operations (e.g., membership announcements between
+%gateways, the domain-level topology information) are handled by an
+%inter-gateway protocol. In addition, the data exchange between
+%inter-domain gateways is also handled by a common gateway protocol. In
+%this way, each gateway needs to speak only two protocols: the native
+%intra-domain protocol and the common gateway protocol.
+%
+% [Starsky] comment out as it may not work in proactive case
+%For inter-domain data transfers, a gateway needs to act as a proxy in
+%its intra-domain. In order to route packets destined to external
+%domains, a gateway will advertise the external addresses that it can
+%reach to the intra-domain nodes. If the intra-domain routing protocol
+%is proactive, then this information will be propagated to all
+%intra-domain nodes. If the intra-domain routing protocol is reactive,
+%then the gateway must respond to route discovery requests for the
+%external domain that it can reach. When it receives the packets from
+%an internal node, it forwards them in the common gateway protocol to a gateway
+%in the next-hop domain.
+
+%The route announcements give gateways the knowledge of inter-domain level routes to destinations, and encapsulate the intra-domain parts of the routes.
+
+%In IDRM, a non-gateway node learns about the list of intra-domain gateways from the periodic beacons from them. 
+
+%% To send data packets to an external destination (in another domain) or
+%% to a destination in a partitioned network (in the same domain), the
+%% gateways will function as proxies to handle data forwarding decision
+%% for other intra-domain nodes.
+%a node will first deliver the data packets to gateways.
+
+% The resolution of the intra-domain parts depends on the intra-domain routing protocols. 
+%For example, proactive protocols always provide complete internal network knowledge to the gateways, whereas reactive protocols rely on route caching or discovery for reaching the next-hop internal gateways or destinations.
+
+When a node sends data packets to an external destination (in another domain or in another partitioned network), it forwards the packets to one of the reachable intra-domain gateways. In a reactive domain, the sending node will first initiate a route discovery, and a gateway node that has a route to the destination will respond.  In a proactive domain, the sending node will have a list of intra-domain gateways, and select one of them based on its own preferences. 
+%Note that the list of reachable intra-domain gateways will be learned from the regular route updates. 
+In either case, the gateway will first see if it is directly connected to the domain that contains the destination.  If it is then it just forwards the packet; otherwise, it will forward the packets to a gateway connected to the destination domain based on the inter-domain routing information.
+
+For incoming packets, the gateway performs a protocol translation and invokes the intra-domain routing protocol.  In a reactive domain, the gateway will initiate a route discovery process if it does not already have the route in the cache. In a proactive domain, the gateway can determine if the destination is reachable from the local routing table. 
+%An illustration of data forwarding process is presented in Section \ref{sec::ex1}.
+
+If for some reasons the destination cannot be reached (e.g., the node may have been disconnected from any domain) IDRM does not provide feedback for unreachable destination. Following the design principles of the Internet, the problem should be handled at a higher layer.  Although we only discuss proactive and reactive routing protocols in this paper, it is not difficult to see that this framework can support other types of intra-domain routing protocols (e.g., geo-routing and hybrid routing). Thus we do not present these cases in this paper.
+
+%% \subsection{Operation of the IDRM} 
+
+%% In multi-domain MANETs, there are multiple MANETs joined by bidirectional links of inter-domain gateway pairs. In IDRM, the inter-domain routing information among gateways is carried out by a semi-proactive path vector protocol as follows.
+
+%% \begin{enumerate}
+
+%% \item When a new domain joins, the internal gateways detect and announce all the reachable destinations within the MANET. The precise mechanism of detection of reachable destinations relies on the intra-domain routing protocols. For example, proactive routing protocols like OLSR and DSDV implicitly admit detection of reachable destinations, whereas reactive routing protocols like DSR and AODV require additional route discovery at every destination with the MANET. However, the detection of reachable destinations is only triggered be special events like network partition and merging, but is not required to carry out on continual basis.
+
+%% \item All gateways periodically detect other internal gateways within the same domain, either be informed by the intra-domain proactive routing protocol or through periodically sending beacons in reactive intra-domain routing protocol. 
+
+%% \item A pair of inter-domain gateways, say $a_1$ belonging domain $A$ and $b_1$ belonging domain $B$, will communicate for inter-domain level routing information, when they are within communication range. Suppose $a_1$ has a inter-domain level route to a certain destination, say $c_1$.
+
+%% \begin{enumerate}
+
+%% \item 
+%% If $a_1$ is willing to provide transit service to domain $B$ for $c_1$, then $a_1$t appends a MANET ID to the route announcement of path to the destinations and announce it to $b_1$. A MANET ID is defined as $[A$:$a_1$:$a_2$:$\cdots$:$a_n]$, where $A$ is the domain ID, and $a_1, ..., a_n$ are the IDs of gateways that can be detected by $a_1$ in domain $A$. MANET ID can uniquely distinguish different MANETs of the same domain. When $b_1$ receives the route announcement, it will record the source of announcement as $a_1$ and distributes the announcement to other internal gateways in domain $B$.
+
+%% \item If a gateway is not willing to provide transit service to domain $B$ to $c_1$, the route announcements of paths to $c_1$ will be not announced to $b_1$.
+
+%% \end{enumerate}
+
+%% \item Because of mobility, a MANET may be partitioned into multiple MANETs with no intra-domain connectivity, or multiple MANETs of the same domain rejoin to gain intra-domain connectivity. 
+
+%% \begin{enumerate}
+
+%% \item For MANET partition, there may be a pair of internal gateway become unable to detect each other, while they could before. This should trigger the internal gateways to re-detect the reachable destinations within the MANET. We ignore the case of MANETs partition with no gateways in a partitioned MANET, because this MANET cannot be reached from other domains anyhow.
+
+%% \item For MANET merging, there may be a pair of internal gateway become able to detect each other, while they could not before. This should also trigger the internal gateways to re-detect the reachable destinations within the MANET. 
+
+%% \end{enumerate}
+%% After re-announcements of reachable destinations using a new MANET ID, reflecting the changes of gateways in the MANET, will diffuse through the multi-domain MANETs, and hence, the inter-domain routing information at all the gateways will be updated. Note that re-detection and re-announcements of reachable destinations only take place when MANET partition or merging is detected.
+
+%% \end{enumerate}
+
+%% The detection of reachable need not be carried out by all gateways, but by some dedicated gateways and then is communicated to other gateways. The topology of internal gateway-to-gateway communications need not be a complete graph, but may be a star or a ring that optimise communication overhead within the MANETs.
+
+
+%% The inter-domain routing information obtained by semi-path vector protocol will assist the forwarding decision of mobile nodes to external destinations. However, the precise forwarding behaviour depends on specific intra-domain routing protocols and policies. We design IDRM to be as flexible as possible to compatible with a wide range of intra-domain routing protocols and policies. To illustrate the behaviour, we present two examples as follows.
+
+
+%% \subsection{Network Digests}
+
+
+%% Next, we address the issue of route announcement overhead in the presence of arbitrary network partition. To replace IP prefix aggregation, we propose to use Bloom filters as network digests of destinations.
+
+%% Bloom filter \cite{BM04bloom} is commonly employed in the extant literature as a space-efficient data structure for approximately membership testing. Since Bloom filter is not a perfect representation of a set, there are possibly false positives (but not false negatives). But the probability of false positives decreases exponentially as the size of Bloom filter. 
+
+%% Instead of announcing the list of IDs of destinations, a gateway can announce the network digest for its MANET by a Bloom filter mapping from the set of IDs of destinations reachable in the MANET. To lookup a destination, a gateway will check the network digest in the route announcements to locate the MANET. The use of network digest can enable scalable inter-domain routing tables.
+

@@ -1,0 +1,66 @@
+8
+
+dir
+147
+file:///home/hoon/svn/idrm/ns-allinone-2.32/ns-2.32/indep-utils/webtrace-conv
+file:///home/hoon/svn
+
+
+
+2010-01-20T17:29:33.777455Z
+12
+hoon
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+cc5c679f-4bc2-4865-bcce-3940cb15ceb2
+
+epa
+dir
+
+ucb
+dir
+
+nlanr
+dir
+
+dec
+dir
+
+Makefile
+file
+
+
+
+
+2010-01-20T18:15:10.000000Z
+e95d8c59269a1bcc333377d5a19da49b
+2010-01-20T10:58:05.263146Z
+6
+hoon
+has-props
+
+README
+file
+
+
+
+
+2010-01-20T18:15:10.000000Z
+42c4c48e2544cdcc540b541a8c75a262
+2010-01-20T10:58:05.263146Z
+6
+hoon
+has-props
+

@@ -1,0 +1,52 @@
+8
+
+dir
+147
+file:///home/hoon/svn/idrm/ns-allinone-2.32/ns-2.32/idrm
+file:///home/hoon/svn
+
+
+
+2010-03-01T21:52:43.033784Z
+147
+vincent
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+cc5c679f-4bc2-4865-bcce-3940cb15ceb2
+
+idrm.cc
+file
+
+
+
+
+2010-03-01T22:21:54.000000Z
+23fc725d6d1d6500a81e9e5c71d0c212
+2010-03-01T21:52:43.033784Z
+147
+vincent
+
+idrm.h
+file
+
+
+
+
+2010-03-01T22:21:54.000000Z
+65233dde9c0d7c6a63f75b0775982c66
+2010-03-01T21:52:43.033784Z
+147
+vincent
+

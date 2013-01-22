@@ -1,0 +1,54 @@
+8
+
+dir
+147
+file:///home/hoon/svn/idrm/ns-allinone-2.32/ns-2.32/tcl/test/test-output-monitor
+file:///home/hoon/svn
+
+
+
+2010-01-20T10:58:05.263146Z
+6
+hoon
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+cc5c679f-4bc2-4865-bcce-3940cb15ceb2
+
+tcp.gz
+file
+
+
+
+
+2010-01-20T18:14:29.000000Z
+bd2a56c0943b40fbe017322d8e5f03ec
+2010-01-20T10:58:05.263146Z
+6
+hoon
+has-props
+
+tcp-monitor.gz
+file
+
+
+
+
+2010-01-20T18:14:29.000000Z
+2f8c71febf2b94f886014212442308af
+2010-01-20T10:58:05.263146Z
+6
+hoon
+has-props
+

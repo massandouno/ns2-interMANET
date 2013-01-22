@@ -1,0 +1,408 @@
+# simulation parameters and options
+set starttime 1.0; 	# simulation start time in secs
+set simulation_time 3000
+#command arguments
+#nn: number of nodes
+#nd: number of domains
+#ng: number of gateway in a domain
+#eb: eIDRM Beacon interval
+#ib: iIDRM Beacon interval
+#fn: file name recording the result stat
+#area: simulation area
+#udp: data traffic 1Mbps or higher..
+
+if {[llength $argv] != 11} {
+	puts "Parameters: width height seed duration num_of_domains num_of_gateways_per_domain"
+	exit 1
+}
+
+set width					[lindex $argv 0];
+set height					[lindex $argv 1];
+# set my_seed				    [lindex $argv 2];
+
+set num_of_domains               [lindex $argv 3];
+set num_of_groups_per_domain     [lindex $argv 4];
+set num_of_gateways_per_group    [lindex $argv 5];
+set num_of_nongateways_per_group [lindex $argv 6];
+set num_of_nodes_per_group       [expr $num_of_nongateways_per_group + $num_of_gateways_per_group];
+set num_of_nodes_per_domain      [expr $num_of_nodes_per_group * $num_of_groups_per_domain];
+set num_of_gateways_per_domain   [expr $num_of_gateways_per_group * $num_of_groups_per_domain];
+set num_of_nodes                 [expr $num_of_nodes_per_domain * $num_of_domains];
+set num_of_gateways              [expr $num_of_gateways_per_domain * $num_of_domains];
+set num_of_groups                [expr $num_of_groups_per_domain * $num_of_domains];
+
+set nn						$num_of_nodes;
+set file_name				o_random_output;
+set my_dynamic			    [lindex $argv 7];  # 0: static, 1:simple_dynamic  2:adapt_dynamic
+set percentage_gateway      [lindex $argv 8];  # 0 ~ 100 for static and simple_dynamic, ignored for adapt_dynamic
+set eb						[lindex $argv 9];
+set ib						[lindex $argv 10];
+set udprate					1;
+set schannel				0;
+
+# puts "Number of Nodes: $nn, Number of Domains: $nd, Number of Gateways: $ng, eIDRM Beacon: $eb, iIDRM Beacon: $ib, Result file name: $file_name $my_seed $my_speed percentage_gateway: $my_percentage_gateway dynamic: $my_dynamic area: $area UDP: $udprate S_Channel: $schannel"
+
+# Topology Parameters and associated nam attributes for animation 
+set topo(nn)     $nn; 													# Number of nodes 
+set topo(grid_x) $width;													# grid length in meters
+set topo(grid_y) $height;													# grid width in meters
+
+#IDRM_SH
+set topo(nd)		 $num_of_domains;
+set topo(ng)		 $num_of_gateways_per_domain;
+set topo(dnn) 	     $num_of_nodes_per_domain;
+
+set topo(eb)		 $eb;
+set topo(ib)		 $ib;
+
+#0102
+set topo(percentage_gateway) $percentage_gateway;
+
+#0214
+set topo(dynamic) $my_dynamic;
+
+set topo(schannel) $schannel;
+
+#<topo maxx="1000" maxy="1000" simtime="6" nonode="4" />
+#for demo
+#puts "<topo maxx=\"$topo(grid_x)\" maxy=\"$topo(grid_y)\" simtime=\"$duration\" nonode=\"$nn\" />"
+
+set proto(chan) 	Channel/WirelessChannel;			# channel type
+set proto(prop) 	Propagation/TwoRayGround;			# radio-propagation model
+set proto(netif) 	Phy/WirelessPhy;							# network interface type
+set proto(mac) 		Mac/802_11;										# MAC type
+set proto(ifq) 		Queue/DropTail/PriQueue;			# interface queue type
+set proto(ll) 		LL;														# link layer type
+set proto(ant) 		Antenna/OmniAntenna;					# antenna model
+set proto(ifqlen) 50;														# max packet in ifq
+
+# IDRM based network settings
+set net(max_net_chans) 101;												# This is the maximum number of channels on the network. 
+                         												# One channel each for domains A, B and C (both gateways and non-gateways operate) and 
+                         												# one channel for gateways ONLY to operate on a separate additional domain.
+			 									 												# let channe index 0 for A, 1 for B, 2 for C and 3 for gateways
+			 									 												# let routing protcol index be 0 for A, 0 for B and 0 for C i.e. all AODV on interface 0 and IDRM on interface 1 (for gateways)
+
+set net(max_node_ifaces) 2; 										# maximum number of interfaces per node. non-gateways will have one interface while gateways will have 2
+			    																			# for non gateways, inteface index 0 (there is only one) is used to operate on the channel 
+                            										# corresponding to domain. For gateways too inteface index 0 is used to operate on the channel 
+			    																			# and interface index 1 used to operate on the channel assigned for gateway interaction
+
+#Reading protocol setting and parameters
+
+#set position
+source "./group/n50_x2000_y2000_sm20_sd1_seed1.position"
+
+set colors(0)	blue
+set colors(1)	darkgreen
+set colors(2)	purple
+set colors(3)	orange
+set colors(4)	brown
+set colors(5)	yellowgreen
+set colors(6)	gold
+set colors(7)	black
+set colors(8)	darkgrey
+set colors(9)	darkblue
+
+#for {set i 0} {$i < $num_of_groups} {incr i} {
+#	set group_gateway_count($i) 0;
+#}
+
+for {set i 0} {$i < $topo(nd)} {incr i} {
+	for {set j 0} {$j < $topo(dnn)} {incr j} {
+
+		set id        [expr $i*$topo(dnn)+$j];
+
+		if { $id == 50 } {
+			puts "bad $i $j $topo(dnn) $topo(nd)"
+		}
+
+		#set group_id  $topo($id,group_id);
+
+
+		set topo($id,num_if_ch)				    2;		# num interfaces = number of channels. one-to-one mapping between inteface and channels.
+		set topo($id,idx_map_if_to_ch,0)	    0;		# mapping interface to channel
+		set topo($id,idx_map_if_to_ch,1)	    2;		# mapping interface to channel
+		set topo($id,idx_map_if_to_ragent,0)	0;		# mapping interface to routing agent
+		set topo($id,idx_map_if_to_ragent,1)	2;		# mapping interface to routing agent
+		set topo($id,my_domain)				   $i;		#set its domain id
+
+		set topo($id,my_identity) 0;
+		#if { $group_gateway_count($group_id) < $num_of_gateways_per_group } {
+		set topo($id,my_identity) 1; # gateway
+		#	incr group_gateway_count($group_id);
+		#}
+
+		set nam($id,dom_id)				     $i;		#domain id
+		set nam($id,node_id)				$id;		#node id
+		set nam($id,color) $colors([expr $i%10]);		#domain color
+		set nam($id,shape)				 square;		#shape
+	}
+
+	for {set j 0} {$j < $topo(dnn)} {incr j} {
+		set id  [expr $i*$topo(dnn)+$j];
+		set dc 0;
+		for {set k 0} {$k < $topo(dnn)} {incr k} {
+			set id2 [expr $i*$topo(dnn)+$k];
+			if { $topo($id2,my_identity) == 1 } {
+				set topo($id,my_gateway,$dc) $id2;
+				incr dc;
+			}
+		}
+	}
+}
+
+#Reading topology setting
+
+set proto(rp,0)		DSDV
+set proto(rp,1)		AODV
+set proto(rp,2)		IDRM
+
+
+# =====================================================================
+# Other default settings
+
+LL set mindelay_				50us
+LL set delay_						25us
+LL set bandwidth_				0;					# not used
+
+Agent/Null set sport_		0
+Agent/Null set dport_		0
+
+Agent/CBR set sport_		0
+Agent/CBR set dport_		0
+
+Agent/UDP set sport_		0
+Agent/UDP set dport_		0
+
+
+Queue/DropTail/PriQueue set Prefer_Routing_Protocols    1
+
+# unity gain, omni-directional antennas
+# set up the antennas to be centered in the node and 1.5 meters above it
+Antenna/OmniAntenna set X_ 0
+Antenna/OmniAntenna set Y_ 0
+Antenna/OmniAntenna set Z_ 1.5
+Antenna/OmniAntenna set Gt_ 1.0
+Antenna/OmniAntenna set Gr_ 1.0
+
+# Initialize the SharedMedia interface with parameters to make
+# it work like the 914MHz Lucent WaveLAN DSSS radio interface
+Phy/WirelessPhy set CPThresh_ 10.0
+Phy/WirelessPhy set CSThresh_ 1.559e-11
+Phy/WirelessPhy set RXThresh_ 3.652e-10
+Phy/WirelessPhy set Rb_ 2*1e6
+Phy/WirelessPhy set Pt_ 0.2818
+Phy/WirelessPhy set freq_ 914e+6 
+Phy/WirelessPhy set L_ 1.0
+
+#Set wireless data rate
+Mac/802_11 				set dataRate_          11Mb;	# 11Mbps //0710 SHLEE
+Mac/802_11 				set basicRate_         11Mb;		# 1Mbps
+Mac/802_11 set RTSThreshold_ 3000
+
+Mac/802_11 set sifs_ 10us
+Mac/802_11 set difs_ 50us
+
+
+# ======================================================================
+# Main Program
+# ======================================================================
+# 
+# Initialize ns
+#
+set ns [new Simulator]
+
+#
+# Initialize Global Variables
+#
+# define color index
+
+
+#random
+# ns-random $my_seed
+
+# [Turn on tracing]
+#Open the nam/other trace file
+# if you want to use the new  trace format uncomment the next line
+$ns use-newtrace
+
+#Open the NAM trace file
+set nf [open dump_files/idrm_main.nam w]
+$ns namtrace-all-wireless $nf $topo(grid_x) $topo(grid_y)
+$ns trace-all $nf
+
+#Open the Trace file
+set tf [open dump_files/idrm_main.tr w]
+#$ns trace-all $tf
+
+
+# Create topology
+# set up topography object
+set topog	[new Topography]
+for {set i 0} {$i < $net(max_net_chans)} {incr i} {
+	set chan($i)        [new $proto(chan)]
+}
+
+$topog load_flatgrid $topo(grid_x) $topo(grid_y)
+create-god [expr $topo(nn) * $net(max_node_ifaces)]; 
+
+# create MobileNode object (PHY to layer 3 configured) 
+# first use $chan(0) for all, we will change it when we set the nodes
+# also first use some basic routing protocol (agent) for all like AODV. Later we will set up one routing agent per interface
+$ns node-config -adhocRouting $proto(rp,0) -llType $proto(ll) \
+    -macType $proto(mac)   -ifqType $proto(ifq) \
+    -ifqLen $proto(ifqlen) -antType $proto(ant) \
+    -propType $proto(prop) -phyType $proto(netif) \
+    -channel $chan(0)      -topoInstance $topog \
+    -agentTrace ON         -routerTrace ON \
+    -macTrace ON           -movementTrace ON \
+    -ifNum $net(max_node_ifaces) 
+
+
+# create Mobile Node object 
+for {set i 0} {$i < $topo(nn)} {incr i} {
+
+    # now set channels and interfaces properly
+    $ns change-numifs $topo($i,num_if_ch)
+    for {set k 0} {$k < $topo($i,num_if_ch)} {incr k} {
+        $ns add-channel-and-routing-to-interface $k $chan($topo($i,idx_map_if_to_ch,$k)) $proto(rp,$topo($i,idx_map_if_to_ragent,$k))
+
+			puts "node:$i $k $chan($topo($i,idx_map_if_to_ch,$k)) $proto(rp,$topo($i,idx_map_if_to_ragent,$k)) "    
+
+    }
+
+    
+    #set DomainId, Identity, and number of gateways..
+    $ns idrm_set $topo($i,my_domain) $topo($i,my_identity) $topo(ng) $topo(dnn) $file_name $topo(eb) $topo(ib) $topo(dynamic) $topo(percentage_gateway) $topo(schannel) $nam($i,color)
+        
+    #Set gateway nodes to each node
+    for {set k 0} {$k < $topo(ng)} {incr k} {
+			$ns idrm_gateway_set $k $topo($i,my_gateway,$k)
+    }
+    
+    #Set domain members to each node
+	set dc 0;
+	for {set j 0} {$j < $topo(nn)} {incr j} {
+		if { $topo($i,my_domain) == $topo($j,my_domain) } {
+			$ns idrm_domain_set $dc $j
+			incr dc
+		}
+  	}
+
+	for {set j $dc} {$j < $topo(dnn)} {incr j} {
+				$ns idrm_domain_set $dc -1
+				incr dc
+  	}
+    
+    set node($i) [$ns node]
+    $node($i) random-motion 0		;# disable random motion
+    # Now set node's starting placement
+    $node($i) set X_ $topo($i,start_x);
+    $node($i) set Y_ $topo($i,start_y);
+    $node($i) set Z_ 0.0
+    $node($i) color $nam($i,color);# sets color of node and label
+    $node($i) shape $nam($i,shape);# sets shape of node
+ 	
+    # sets label on node and ...
+    # 50 defines the node size in nam, must adjust it according to your scenario
+    # The following function must be called after mobility model is defined
+    #$ns initial_node_pos $node($i) 50
+    # the procedure above forces the color and shape, so instead use own line insertion in nam file
+
+    $node($i) idrm-dump-namconfig 50 "$nam($i,dom_id)$nam($i,node_id)"
+}
+
+    
+
+#Reading traffic setting
+
+source "./idrm_setting/idrm_random_traffic_$nn\_$udprate\Mbps.tcl"
+source "./idrm_setting/idrm_random_traffic_$nn\_$udprate\Mbps_ping.tcl"
+
+#Reading mobility setting: RWP mobility
+<<<<<<< .mine
+source "./group/n50_x2000_y2000_sm20_sd1_seed1.movement"
+=======
+source "./group/n50_x2000_y2000_sm20_sd1_seed1.movement"
+
+
+>>>>>>> .r46
+# Create Layer 4 and above
+#   - UDP/TCP agents
+#   - application and/or setup traffic sources
+
+set npt 0
+
+#for {set i 0} {$i < $nt } {incr i} {
+#including ping
+for {set i 0} {$i < $npt } {incr i} {
+    #Set up transport layer (UDP). UDP agent for src and NULL agent for dest
+    set udp($i) [new Agent/UDP]
+    set null($i) [new Agent/Null]
+    $ns attach-agent $node($traffic($i,src)) $udp($i)
+    $ns attach-agent $node($traffic($i,dst)) $null($i)
+    $ns connect $udp($i) $null($i)
+
+    #define traffic
+	  global ::cbr($i)
+    set cbr($i) [new Application/Traffic/CBR]
+    $cbr($i) set packetSize_ $traffic($i,pksize)
+    $cbr($i) set rate_ $traffic($i,rate)
+    $cbr($i) attach-agent $udp($i)
+
+    $ns at [expr $starttime + $traffic($i,startoffset)] "puts \"Starting CBR traffic $i...\";$cbr($i) start"
+}
+
+#$nt~ $npt : ping
+
+set ping_interval		5
+set ping_now				[expr $starttime + $traffic($nt,startoffset) + $ping_interval]
+
+$ns at $ping_now "ping"
+
+proc ping {} {
+	global ping_now ns ping_interval nt npt
+
+	for {set i $nt} {$i < $npt } {incr i} {
+		$ns at $ping_now "$::cbr($i) stop"
+	}
+	
+	set ping_now [expr $ping_now + $ping_interval]
+
+	for {set i $nt} {$i < $npt } {incr i} {
+		$ns at $ping_now "$::cbr($i) start"
+	}
+	$ns at $ping_now "ping"
+}
+
+
+# Tell nodes when the simulation ends
+#
+for {set i 0} {$i < $topo(nn)} {incr i} {
+   $ns at [expr $starttime + $simulation_time] "$node($i) reset";
+}
+
+#Call the finish procedure after of simulation time
+$ns at [expr $starttime + $simulation_time + 0.000001] "finish"
+
+# Post-processing procedures
+#Define a 'finish' procedure
+proc finish {} {
+        global ns nf tf
+        #$ns flush-trace
+        ##Close the NAM trace file
+        #close $nf
+        ##Close the Trace file
+        #close $tf
+
+	#Execute nam on the trace file
+        #exec nam idrm_main.nam &
+        exit 0
+}
+
+#Run the simulation
+puts "Starting Simulation..."
+# Start simulation
+$ns run
+

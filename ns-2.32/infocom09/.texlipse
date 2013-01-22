@@ -1,0 +1,13 @@
+#TeXlipse project settings
+#Tue Jul 29 20:40:54 EDT 2008
+builderNum=6
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=
+mainTexFile=paper.tex
+outputFile=paper.pdf
+langSpell=
+markDer=true
+srcDir=

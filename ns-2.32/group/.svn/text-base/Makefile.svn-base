@@ -1,0 +1,2 @@
+default:
+	g++ -Wall -O2 -o rpgm rpgm.cpp

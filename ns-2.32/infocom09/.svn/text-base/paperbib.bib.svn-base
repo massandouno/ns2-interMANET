@@ -1,0 +1,355 @@
+%%% Months
+@string{JAN = "January"}
+@string{FEB = "February"}
+@string{MAR = "March"}
+@string{APR = "April"}
+@string{MAY = "May"}
+@string{JUN = "June"}
+@string{JUL = "July"}
+@string{AUG = "August"}
+@string{SEP = "September"}
+@string{OCT = "October"}
+@string{NOV = "November"}
+@string{DEC = "December"}
+
+%%% Journals
+@string{PIEEE = "Proceedings of the IEEE"}
+@string{IEEEJSAC = "IEEE J. Selected Areas in Communications"}
+@string{IEEETN = "IEEE/ACM Trans. Networking"}
+@string{IEEETCOM = "IEEE Trans. Communications"}
+@string{IEEETIT = "IEEE Trans. Information Theory"}
+@string{INTERNETWORK = "Journal of Internetworking Research and Experience"}
+@string{IJDACS = "International Journal on Digital and Analog Communication Systems"}
+@string{IJCS = "International Journal on Communication Systems"}
+@string{ACMTCS = "ACM Trans. Computer Systems"}
+@string{JACM = "J. of the ACM"}
+@string{CC = "Computer Communications"}
+@string{IPJ = "Internet Protocol Journal"}
+
+%%% Magazines
+@string{CACM = "Communications of the ACM"}
+@string{COMPUTER = "IEEE Computer Magazine"}
+@string{IEEECOM = "IEEE Communication Magazine"}
+@string{IEEENET = "IEEE Network Magazine"}
+@string{CCR = "ACM Computer Communication Review"}
+
+%%% Conferences
+@string{INFOCOM = "Proc. IEEE INFOCOM"}
+@string{GLOBECOM = "Proc. IEEE GLOBECOM"}
+@string{GINET = "Proc. IEEE Global Internet Symposium"}
+@string{SIGCOMM = "Proc. ACM SIGCOMM"}
+@string{MOBICOMM = "Proc. ACM MOBICOM"}
+@string{MOBIHOC = "Proc. ACM MOBIHOC"}
+@string{SIGMETRICS = "Proc. ACM SIGMETRICS"}
+@string{ICNP = "Proc. Inter. Conf. on Network Protocols"}
+@string{ICC = "Proc. Inter. Conf. on Communications"}
+@string{WOWMOM = "Proc. Inter. Symp. on World of Wireless and Multimedia Networks"}
+
+
+%%% Publishers
+@string{AW="Addison-Wesley"}
+@string{CP="Cisco Press"}
+@string{PH="Prentice Hall"}
+@string{OR="O'Reilly"}
+
+%%% Standards
+@string{IETF = "IETF"}
+@string{RFC = "RFC"}
+
+
+
+
+
+
+ @misc{wiki07adhoc,
+        author = "Wikipedia",
+        title = "List of ah hoc protocols",
+        howpublished = "\url{http://en.wikipedia.org/wiki/Ad_hoc_protocol_list}"
+}
+
+
+@article{royer99review,
+        author = "E. Royer and C. Toh",
+        title = "A Review of Current Routing Protocols for Ad-Hoc Mobile Wireless Networks",
+        journal = "IEEE Personal Communications",
+        month = APR,
+        year = 1999,
+        pages = "46--55"           
+}
+
+
+@article{AWD04review,
+        author = "M. Abolhasan and T. Wysocki and E. Dutkiewicz",
+        title = "A Review of Routing Protocols for Mobile Ad Hoc Networks",
+        journal = "Ad Hoc Networks",
+        volume = 2,             
+        year = 2004,
+        pages = "1--22"
+}
+
+
+@inproceedings{crowcroft07main,
+        author = "Jon Crowcroft",
+        title = "Mobile Ad-hoc Inter-domain Networking",
+        booktitle = "First ITA Annual Conference",
+        month = SEP,
+        year = 2007 
+}
+
+
+@article{crowcroft03plutarch,
+         author = {Jon Crowcroft and Steven Hand and Richard Mortier and Timothy Roscoe and Andrew Warfield},
+         title = {Plutarch: an argument for network pluralism},
+         journal = CCR,
+         volume = 33,
+         number = 4,
+         year = 2003,
+         pages = "258--266"
+ }
+
+
+
+@inproceedings{SEBQ04turfnet,
+        author = "S. Schmid and L. Eggert and M. Brunner and J. Quittek",
+        title = "{TurfNet}: An Architecture for Dynamically Composable Networks",
+        booktitle = "Proc. of 1st IFIP International Workshop on Autonomic Communication (WAC 2004)",
+        month = OCT,
+        year = 2004
+}
+	
+	
+@book{perkins01manet,
+        author = "Charles Perkins",
+        title = "Ad hoc Networking",
+        year = 2001,     
+        publisher = AW
+}
+
+
+@incollection{johnson96dsr,
+        author = "David B Johnson and David A Maltz",
+        title = "Dynamic Source Routing in Ad Hoc Wireless Networks",
+        booktitle = "Mobile Computing",
+        volume = "353",
+        publisher = "Kluwer Academic Publishers",
+        editor = "Imielinski and Korth",
+        year = "1996"
+}
+
+
+@misc{aodv,
+        title = "{IETF Internet Draft:} {Ad Hoc On Demand Distance Vector} ({AODV}) {Routing}",
+        author = "C. Perkins",
+        month =  NOV,
+        year =  1997
+}
+
+@misc{olsr,
+        title = "{RFC 3626:} {Optimized Link State Routing Protocol} ({OLSR})",
+        author = "T. Clausen and P. Jacquet",
+        month =  OCT,
+        year =  2003
+}
+
+
+
+@inproceedings{park97tora,
+        author = "Vincent D. Park and M. Scott Corson",
+        title = "A Highly Adaptive Distributed Routing Algorithm for Mobile Wireless Networks",
+        booktitle = INFOCOM,
+        year = 1997,
+        url = "citeseer.ist.psu.edu/park97highly.html" 
+}
+
+
+@inproceedings{li00gls,
+        author = "J. Li and J. Jannotti and D. {De Couto} and D. Karger and R. Morris",
+        title = "A scalable location service for geographic ad-hoc routing",
+        booktitle = MOBICOM,
+        year = 2000,
+        month = AUG
+}
+    
+
+@inproceedings{haas03sharp,
+        author = "V. Ramasubramanian and Z. J. Haas  and E. G. Sirer",
+        title = "{SHARP}: A Hybrid Adaptive Routing Protocol for Mobile Ad Hoc Networks",
+        booktitle = MOBIHOC,
+        year = 2003,
+        month = JUN
+}  
+
+@inproceedings{haas97zrp,
+        author = "Z. Haas",
+        title = "A new routing protocol for the reconfigurable wireless networks",
+        booktitle = "Proc. IEEE Int. Conf. on Universal Personal Communications",
+        month = OCT,        
+        year = 1997
+}   
+
+  
+@inproceedings{chen04clustering,
+        author = "Y. Chen and A. Liestman and J. Liu",
+        title = "Clustering Algorithms for Ad Hoc Wireless Networks",
+        booktitle = "Proc. Ad Hoc and Sensor Networks '04",
+        year = "2004"
+}     
+  
+
+@article{BM04bloom, 
+        author = "A. Broder and M. Mitzenmacher",
+        title = "Network applications of Bloom filters: A Survey.", 
+        volume = 1,
+        number = 4,
+        journal = "Internet Mathematics",
+        pages = "485--509",
+        year = 2004
+}
+
+
+@misc{bgp,
+        title = "{RFC 1771:} A {Border Gateway Protocol} 4 ({BGP}-4)",
+        author = "Y. Rekhter and T. Li",
+        month =  MAR,
+        year =  1995
+}
+
+
+@misc{GH05wedgies,
+        title = "{RFC 4264:} {BGP} Wedgies",
+        author = "Timothy G. Griffin and Geoff Huston",
+        month =  NOV,
+        year =  2005
+}
+
+@misc{MGWR02oscillation,
+        author = "D. McPherson and V. Gill and D. Walton and A. Retana",
+        title = "{RFC 3345:} {Border Gateway Protocol (BGP)} persistent route oscillation condition",
+        month = AUG,
+        year = 2002
+}
+
+
+@inproceedings{ERCS06resol,
+        author = "Cheng Tien Ee and Vijay Ramachandran and  Byung-Gon Chun and Scott Shenker",
+        title = "Resolving {BGP} Disputes",
+        booktitle = SIGCOMM,
+        year = "2007",
+        month = AUG
+}
+
+
+
+@inproceedings{chau06nonstrict,
+        author = "Chi-Kin Chau",
+        title = "Policy-based Routing with Non-strict Preferences",
+        booktitle = SIGCOMM,
+        month = SEP,
+        year = 2006 
+}
+
+ 
+@inproceedings{GW99conv,
+        author = "Timothy G. Griffin and Gordon Wilfong",
+        title = "An Analysis of {BGP} Convergence Properties",
+        booktitle = SIGCOMM,
+        month = SEP,
+        year = 1999
+}
+
+@inproceedings{GSW99dispute,
+        author = "Timothy G. Griffin and F. Bruce Shepherd and Gordon Wilfong",
+        title = "Policy Disputes in Path-Vector Protocols",
+        booktitle = ICNP,
+        month = NOV,
+        year = 1999
+}
+
+@inproceedings{GW00safe,
+        author = "Timothy G. Griffin and Gordon Wilfong",
+        title = "A Safe Path Vector Protocol",
+        booktitle = INFOCOM,
+        month = MAR,
+        year = 2000
+}
+
+@inproceedings{GGR01backup,	
+        author = "Timothy G. Griffin and Lixin Gao and Jennifer Rexford",
+        title = "Inherently Safe Backup Routing with {BGP}",
+        booktitle = INFOCOM,
+        month = APR,
+        year = 2001
+}
+
+
+@article{GSW02spp, 
+        author = "Timothy G. Griffin and F. Bruce Shepherd and Gordon Wilfong",
+        title = "The Stable Paths Problem and Interdomain Routing", 
+        volume = 10,
+        number = 2,
+        journal = IEEETN,
+        pages = "232--243",
+        month = APR,
+        year = 2002
+}
+
+
+@inproceedings{griffin05meta,
+        author = "Timothy G. Griffin and {Jo\~ao Lu\'iz} Sobrinho",
+        title = "Metarouting",
+        booktitle = SIGCOMM,
+        month = SEP,
+        year = 2005
+}
+
+
+@inproceedings{GJR03principles,
+        author = "Timothy G. Griffin and Aaron D. Jaggard and Vijay Ramachandran",
+        title = "Design Principles of Policy Languages for Path Vector Protocols",
+        booktitle = SIGCOMM,
+        month = SEP,
+        year = 2003
+}
+
+
+@phdthesis{chau07phd,
+        author = "Chi-Kin Chau",
+        title = "Networks and Disputes",
+        year = 2007,     
+        school = "University of Cambridge"
+}
+
+
+@inproceedings{HPS04spv,
+        author = "Yih-Chun Hu and Adrian Perrig and Marvin Sirbu",
+        title = "{SPV}: Secure Path Vector Routing for Securing {BGP}",
+        booktitle = SIGCOMM,
+        month = SEP,
+        year = 2004
+}
+
+@article{CJV04overhead,
+	author = {T. Clausen and P. Jacquet and L. Viennot},
+	title = {Analyzing Control Traffic Overhead versus Mobility and Data Traffic Activity in Mobile Ad-hoc Network Protocols},
+	journal = {ACM Wireless Networks journal (Winet)},
+	year = 	2004,
+	month =	JUL,
+	volume = 10,
+	number = 4
+}
+
+@inproceedings{CE07meeting,
+	author = {Han Cai and Do Young Eun},
+	title = "Crossing over the bounded domain: from exponential to power-law inter-meeting time in {MANET}",
+	booktitle = MOBICOMM,
+	month = SEP,
+	year = 2007
+ }
+
+@inproceedings{Ma05,
+        author = {W. Ma and M. C. Chuah},
+        title = "Comparisons of Inter-domain Routing Schemes for Heterogeneous Ad Hoc Networks",
+        booktitle = WOWMOM,
+        month = JUN,
+        year = 2005
+}

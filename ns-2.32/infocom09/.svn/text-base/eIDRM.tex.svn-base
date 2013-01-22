@@ -1,0 +1,162 @@
+\section{Protocol Specification}
+\label{sec::specification}
+
+In this section we describe the routing protocol of IDRM in pseudo codes. 
+We divide the functionalities of IDRM into two sub-protocols, namely external
+IDRM (e-IDRM) and internal IDRM (i-IDRM). 
+The main duty of e-IDRM is to coordinate communication between gateways in
+different MANETs and perform route maintenance, 
+while i-IDRM is used to handle communication between gateways within
+a single MANET.
+
+For a gateway $i$, let $D(i)$ denote the orginial Domain ID of $i$,
+and let $G(D(i))$ denote the set of the intra-domain gateways in domain $D(i)$.
+Also, $G^{\sf intra}(i)$ denote the set of the intra-domain gateways
+which $i$ has connectivity,
+and $G^{\sf inter}(i)$ denote the set of the inter-domain
+gateways which are within $i$'s single hop range. 
+Let $M(i)$ denote the set of intra-domain members to that $i$ has connectivity.
+
+\subsection{e-IDRM}
+\label{sec::eidrm}  
+
+
+\begin{algorithm}[htb!]
+\floatname{algorithm}{Pseudo Code}
+\caption{Periodic inter-domain rountines}
+\label{alg:intertimer}
+{\small
+\begin{algorithmic}[1]
+\IF {(timer $>$ e-IDRM Beacon interval)}
+	\STATE broadcast e-IDRM beacon
+\ENDIF
+\STATE
+\IF {(timer $>$ route maintenance interval)}
+	\FOR{all routes in route table}  
+		\STATE remove expired route
+	\ENDFOR
+	\STATE read native ad-hoc routing table and update $M(i)$
+	\STATE update IDRM route table according to $M(i)$
+	\STATE
+	\IF {(route table changed)}
+		\STATE broadcast e-IDRM route update
+		\STATE invoke i-IDRM to send route update (in pseudo code
+		\ref{alg:intraMain})
+	\ENDIF
+\ENDIF
+
+\end{algorithmic} 
+}
+\end{algorithm} 
+
+Pseudo code \ref{alg:intertimer} is executed periodically to keep 
+1) broadcasting e-IDRM beacons to neighbour inter-domain gateways,
+2) removing expired route entries in IDRM route table, 
+3) reading underlying ad-hoc routing table and update $M(i)$ and
+IDRM route table accordingly, and 
+4) sending route update information to other gateways if there are any route
+changes. 
+The e-IDRM beacons are sent by broadcast so that new joining gateways
+can learn the neighbouring information immediately.
+For route maintenance, when there are changes in the IDRM route table,
+the gateway will send a route update message to $G^{\sf inter}(i)$ and
+rely on i-IDRM to distribute the route update information to 
+$G^{\sf intra}(i)$. 
+A route update message can consist of the combination of
+following information: 1) new route is added, 
+2) existing route is updated, 
+3) existing route is deleted, and 
+4) new MANET ID is generated. 
+Notice that IDRM depends on the underlying ad-hoc routing protocol to provide
+$M(i)$, in other words, gateway does not probe the membership by itself. 
+
+\begin{algorithm}[htb!]
+\floatname{algorithm}{Pseudo Code}
+\caption{Main inter-domain rountine}
+\label{alg:interMain}
+{\small
+\begin{algorithmic}[1]
+\IF {(recv e-IDRM Beacon)}
+	\STATE update $G^{\sf inter}(i)$ according to MANET policy
+	\STATE update IDRM route table according to MANET policy
+	\STATE
+	\IF {(new gateways are added to $G^{\sf inter}(i)$)}
+		\STATE exchange IDRM route table with the new gateways
+	\ENDIF
+	\STATE
+	\IF {(route table changed)}
+		\STATE broadcast e-IDRM route update
+		\STATE invoke i-IDRM to send route update
+	\ENDIF 
+\ENDIF
+
+\STATE 
+\IF {(recv e-IDRM route update packet)}
+	\STATE update IDRM route table according to MANET policy
+	\STATE
+	\IF {(route table changed)}
+		\STATE broadcast e-IDRM route update
+		\STATE invoke i-IDRM to send route update
+	\ENDIF 
+\ENDIF
+\STATE
+\IF {(recv i-IDRM route update packet)}
+	\STATE broadcast e-IDRM route update
+\ENDIF 
+
+\STATE
+\IF {(recv data packet)}
+	\STATE handleDataPacket(pkt)
+\ENDIF
+\end{algorithmic} 
+}
+\end{algorithm} 
+
+Pseudo code \ref{alg:interMain} is the main routine which consists of the core
+e-IDRM funtions. 
+When a gateway recevies an e-IDRM beacon or a e-IDRM route update,
+it will update its IDRM route table. 
+In here, a gateway detects a new inter-domain gateway, 
+they will first exchange their IDRM route tables.
+Similar to pseudo code \ref{alg:intertimer}, 
+route update messages will be sent to $G^{\sf inter}(i)$ 
+when there are route changes, 
+and propagation of the route update information for intra-domain gateway
+will rely on i-IDRM protocol.
+%The propagation of route changes to intra-domain
+%gateways will be handled by i-IDRM in pseudo code \ref{alg:intraMain}.
+When the gateway receives a data packets, 
+it will pass it to Function HandleDataPacket() 
+in pseudo code \ref{alg:handleDatapacket}.
+ 
+\begin{algorithm}[htb!]
+\floatname{algorithm}{Pseudo Code}
+\caption{Function HandleDataPacket(pkt)}
+\label{alg:handleDatapacket}
+{\small
+\begin{algorithmic}[1]
+	\IF {(destination is listed in native ad-hoc route table)}
+		\STATE forward data by using native ad-hoc routing
+	\ELSIF {(destination is listed in IDRM route table)}
+		\STATE tunnel traffic by using IDRM
+	\ELSE 
+		\STATE drop packet
+	\ENDIF	
+\end{algorithmic} 
+}
+\end{algorithm}  
+
+Pseudo code \ref{alg:handleDatapacket} handles data packets
+received by IDRM gateways, 
+and will be used by both e-IDRM and i-IDRM protocols. 
+When a gateway receive a data packet, 
+it will first check the destination
+appears in the native ad-hoc routing table or not. 
+If the destination appears in the native ad-hoc route table,
+the gateway will using the native ad-hoc routing to forward the data packet.
+If the destination address is not shown in the native ad-hoc route table
+but is shown in the IDRM route table,
+the gateway will tuunel the data packet to the next gateway according to the
+entry in the IDRM route table.
+Finally the gateway will drop the data packet if the destination address is not
+shown in either of route tables.

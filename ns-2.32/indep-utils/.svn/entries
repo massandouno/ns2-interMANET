@@ -1,0 +1,46 @@
+8
+
+dir
+147
+file:///home/hoon/svn/idrm/ns-allinone-2.32/ns-2.32/indep-utils
+file:///home/hoon/svn
+
+
+
+2010-02-03T04:34:58.337916Z
+40
+hoon
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+cc5c679f-4bc2-4865-bcce-3940cb15ceb2
+
+webtrace-conv
+dir
+
+cmu-scen-gen
+dir
+
+propagation
+dir
+
+model-gen
+dir
+
+dosdbell
+dir
+
+dosreduce
+dir
+
